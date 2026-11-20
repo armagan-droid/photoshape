@@ -37,14 +37,14 @@ struct FixtureSet {
     }
 
     @discardableResult
-    func addImage(_ name: String, subdirectory: String? = nil, depth: Bool = false,
+    func addImage(_ name: String, subdirectory: String? = nil, depth: Bool = false, orientation: Int = 1,
                   model: String? = "iPhone 12", lens: String? = "iPhone 12 back camera 4.2mm f/1.6") throws -> URL {
         let dir = subdirectory.map { root.appendingPathComponent($0, isDirectory: true) } ?? root
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let ext = (name as NSString).pathExtension.lowercased()
         let type: UTType = (ext == "heic" || ext == "heif") ? .heic : (ext == "png" ? .png : .jpeg)
         let url = dir.appendingPathComponent(name)
-        try Self.writeImage(to: url, type: type, depth: depth, model: model, lens: lens)
+        try Self.writeImage(to: url, type: type, depth: depth, orientation: orientation, model: model, lens: lens)
         return url
     }
 
@@ -67,7 +67,10 @@ struct FixtureSet {
 
     // MARK: - Image writing
 
-    static func writeImage(to url: URL, type: UTType, depth: Bool, model: String?, lens: String?) throws {
+    /// 64×80 stored pixels; a red 8×8 marker sits in the stored top-left corner.
+    /// Depth (16×20) holds its own row-major index as value, so orientation can be checked exactly.
+    static func writeImage(to url: URL, type: UTType, depth: Bool, orientation: Int = 1,
+                           model: String?, lens: String?) throws {
         let width = 64, height = 80
         let space = CGColorSpace(name: CGColorSpace.sRGB)!
         guard let ctx = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
@@ -76,18 +79,20 @@ struct FixtureSet {
         }
         ctx.setFillColor(CGColor(red: 0.8, green: 0.6, blue: 0.4, alpha: 1))
         ctx.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        ctx.setFillColor(CGColor(red: 1, green: 0, blue: 0, alpha: 1))
+        ctx.fill(CGRect(x: 0, y: height - 8, width: 8, height: 8)) // CG origin is bottom-left
         guard let image = ctx.makeImage(),
               let dest = CGImageDestinationCreateWithURL(url as CFURL, type.identifier as CFString, 1, nil) else {
             throw FixtureError.destination
         }
-        var props: [CFString: Any] = [:]
+        var props: [CFString: Any] = [kCGImagePropertyOrientation: orientation]
         if let model { props[kCGImagePropertyTIFFDictionary] = [kCGImagePropertyTIFFModel: model] }
         if let lens { props[kCGImagePropertyExifDictionary] = [kCGImagePropertyExifLensModel: lens] }
         CGImageDestinationAddImage(dest, image, props as CFDictionary)
         if depth {
             let dw = 16, dh = 20
             var values = [Float32](repeating: 0, count: dw * dh)
-            for i in values.indices { values[i] = Float32(i % dw) / Float32(dw) + 0.5 }
+            for i in values.indices { values[i] = Float32(i) }
             let data = values.withUnsafeBufferPointer { Data(buffer: $0) }
             let description: [CFString: Any] = [
                 kCGImagePropertyWidth: dw,
@@ -105,4 +110,15 @@ struct FixtureSet {
     }
 
     enum FixtureError: Error { case context, destination, finalize }
+}
+
+/// RGBA bytes of one pixel (top-left origin).
+func pixel(_ image: CGImage, x: Int, y: Int) -> (r: UInt8, g: UInt8, b: UInt8) {
+    var bytes = [UInt8](repeating: 0, count: 4)
+    let ctx = CGContext(data: &bytes, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
+                        space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+    // Shift so the requested pixel lands on the 1×1 canvas.
+    ctx.draw(image, in: CGRect(x: -x, y: -(image.height - 1 - y), width: image.width, height: image.height))
+    return (bytes[0], bytes[1], bytes[2])
 }

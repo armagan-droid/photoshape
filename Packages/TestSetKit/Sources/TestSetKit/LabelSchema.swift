@@ -9,6 +9,10 @@ public enum LabelSchema {
             case boolean
             case oneOf([String])
             case setOf([String])
+            /// `{"x", "y", "w", "h"}`, normalized 0–1, top-left origin, displayed orientation.
+            case region
+            /// Non-empty array of regions.
+            case regions
         }
 
         public enum Requirement: Sendable {
@@ -16,6 +20,9 @@ public enum LabelSchema {
             case optional
             /// Required when `key == value`, forbidden otherwise.
             case requiredWhen(key: String, equals: String)
+            /// Optional in the file; when the condition holds and the field is absent, it is reported as a
+            /// gap (not an error). `--strict` fails on gaps. The condition itself lives in `gaps(for:)`.
+            case expectedWhen(String)
         }
 
         public let key: String
@@ -43,6 +50,12 @@ public enum LabelSchema {
         Field(key: "composition_issue", kind: .oneOf(values(CompositionIssue.self)),
               requirement: .requiredWhen(key: "composition", equals: CompositionLabel.bad.rawValue),
               summary: "Main problem; only when composition = bad"),
+        Field(key: "subject_region", kind: .region,
+              requirement: .expectedWhen("scene_type is not cafe_interior or other"),
+              summary: "Main subject (plate, cup); the most important one if several"),
+        Field(key: "neutral_region", kind: .regions,
+              requirement: .expectedWhen("light contains warm_indoor or mixed"),
+              summary: "Surfaces that are really white or grey (plate, cup, napkin); never a blown area"),
         Field(key: "people_visible", kind: .oneOf(values(PeopleVisible.self)), requirement: .required,
               summary: "For future skin tone tests"),
         Field(key: "pair_id", kind: .string, requirement: .optional,
@@ -66,7 +79,7 @@ public enum LabelSchema {
             let isRequired: Bool
             switch field.requirement {
             case .required: isRequired = true
-            case .optional: isRequired = false
+            case .optional, .expectedWhen: isRequired = false
             case .requiredWhen(let key, let expected):
                 isRequired = (dict[key] as? String) == expected
                 if !isRequired, value != nil {
@@ -108,14 +121,58 @@ public enum LabelSchema {
             composition: CompositionLabel(rawValue: dict["composition"] as! String)!,
             compositionIssue: (dict["composition_issue"] as? String).flatMap(CompositionIssue.init(rawValue:)),
             peopleVisible: PeopleVisible(rawValue: dict["people_visible"] as! String)!,
+            subjectRegion: dict["subject_region"].map { region(from: $0)! },
+            neutralRegions: (dict["neutral_region"] as? [Any])?.map { region(from: $0)! } ?? [],
             pairID: dict["pair_id"] as? String,
             notes: dict["notes"] as? String
         )
         return .success(labels)
     }
 
+    /// Expected fields that are missing (spec 00 "Bölge etiketleri"). Not errors; `--strict` fails on them.
+    public static func gaps(for labels: FrameLabels) -> [FieldIssue] {
+        var gaps: [FieldIssue] = []
+        if labels.subjectRegion == nil, ![.cafeInterior, .other].contains(labels.sceneType) {
+            gaps.append(FieldIssue("subject_region", "missing; expected for scene_type \(labels.sceneType.rawValue)"))
+        }
+        if labels.neutralRegions.isEmpty, !labels.light.isDisjoint(with: [.warmIndoor, .mixed]) {
+            gaps.append(FieldIssue("neutral_region", "missing; expected when light contains warm_indoor or mixed"))
+        }
+        return gaps
+    }
+
+    static func region(from value: Any) -> Region? {
+        guard let dict = value as? [String: Any], Set(dict.keys) == ["x", "y", "w", "h"] else { return nil }
+        func number(_ key: String) -> Double? {
+            guard let n = dict[key] as? NSNumber, CFGetTypeID(n) != CFBooleanGetTypeID() else { return nil }
+            return n.doubleValue
+        }
+        guard let x = number("x"), let y = number("y"), let w = number("w"), let h = number("h") else { return nil }
+        return Region(x: x, y: y, w: w, h: h)
+    }
+
+    private static func checkRegion(_ value: Any) -> String? {
+        guard let r = region(from: value) else { return "expected {\"x\", \"y\", \"w\", \"h\"} with numbers only" }
+        let e = Region.epsilon
+        guard [r.x, r.y, r.w, r.h].allSatisfy(\.isFinite) else { return "values must be finite" }
+        guard r.w > 0, r.h > 0 else { return "width and height must be greater than 0" }
+        guard r.x >= -e, r.y >= -e, r.x + r.w <= 1 + e, r.y + r.h <= 1 + e else {
+            return "must lie inside the image (0–1, x + w ≤ 1, y + h ≤ 1)"
+        }
+        return nil
+    }
+
     private static func check(_ value: Any, against kind: Field.Kind) -> String? {
         switch kind {
+        case .region:
+            return checkRegion(value)
+        case .regions:
+            guard let array = value as? [Any] else { return "expected an array of regions, e.g. [{\"x\": 0.1, ...}]" }
+            guard !array.isEmpty else { return "must contain at least one region" }
+            for (i, item) in array.enumerated() {
+                if let problem = checkRegion(item) { return "region \(i): \(problem)" }
+            }
+            return nil
         case .string:
             guard let s = value as? String, !(value is NSNumber) else { return "expected a string" }
             return s.trimmingCharacters(in: .whitespaces).isEmpty ? "must not be empty" : nil
@@ -141,6 +198,19 @@ public enum LabelSchema {
 
     // MARK: - JSON Schema export (for editor completion; derived, never edited by hand)
 
+    private static var regionSchema: [String: Any] {
+        func unit(exclusiveMin: Bool) -> [String: Any] {
+            exclusiveMin ? ["type": "number", "exclusiveMinimum": 0, "maximum": 1] : ["type": "number", "minimum": 0, "maximum": 1]
+        }
+        return [
+            "type": "object",
+            "properties": ["x": unit(exclusiveMin: false), "y": unit(exclusiveMin: false),
+                           "w": unit(exclusiveMin: true), "h": unit(exclusiveMin: true)],
+            "required": ["x", "y", "w", "h"],
+            "additionalProperties": false,
+        ]
+    }
+
     public static func jsonSchema() throws -> Data {
         var properties: [String: Any] = [:]
         for field in fields {
@@ -152,6 +222,11 @@ public enum LabelSchema {
             case .setOf(let values):
                 p["type"] = "array"; p["minItems"] = 1; p["uniqueItems"] = true
                 p["items"] = ["type": "string", "enum": values]
+            case .region: p.merge(regionSchema) { $1 }
+            case .regions: p["type"] = "array"; p["minItems"] = 1; p["items"] = regionSchema
+            }
+            if case .expectedWhen(let condition) = field.requirement {
+                p["description"] = "\(field.summary). Expected when \(condition)."
             }
             properties[field.key] = p
         }

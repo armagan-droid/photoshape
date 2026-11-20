@@ -20,12 +20,24 @@
 - **Otomatik alanlar** (`has_depth`, `device`, `lens`): JSON'da bulunmaları hatadır; dosyadan ImageIO ile okunur.
 - **Desteklenen görüntü türleri:** `heic`, `heif`, `jpg`, `jpeg`, `png` (spec 05 ekran görüntüleri için genişleme payı). Set alt dizinlere bölünebilir; `id` tüm sette benzersizdir.
 
+## Kararlar (bölge etiketleri, 2026-11-20)
+
+| Konu | Karar |
+|---|---|
+| "Ana konu varsa" | Araç ana konuyu bilemez; kural sahne türüne bağlandı. `subject_region`, `scene_type` ∉ {`cafe_interior`, `other`} ise beklenir. |
+| Koşullu zorunluluk: `--strict` mi, eksiklik mi? | İkisi birden. Eksik bölge, hata yerine **eksiklik** (`ValidationReport.gaps`) olarak raporlanır. Kare geçerli kalır; bölgeye ihtiyaç duyan kriterler (spec 02 SC-003/004) bölgesiz kareleri atlar. `validate --strict` eksiklik varsa başarısız olur. |
+| Geçerlilik (FR-008) | Bölge, yalnızca sayısal `x`, `y`, `w`, `h` içeren bir nesnedir. `w`, `h` > 0 olmalı; `x + w ≤ 1` ve `y + h ≤ 1` (1e-6 tolerans). `neutral_region` boş olmayan bir dizidir. |
+| İşaretleme yöntemi (FR-009) | `testset-labeler`: SwiftUI ile yazılmış bir macOS aracı (`swift run`, Xcode projesi gerekmez). Kare üzerinde sürüklenerek işaretlenir ve hemen JSON'a yazılır. Yalnızca bölge anahtarları değişir. Dosya, şema sırasıyla yeniden yazılır. |
+| Yönelim | Bölgeler Fotoğraflar'daki yönelimde verilir. Bu yüzden `loadImage()`, `loadDepth()` ve `FileMetadata.pixelWidth/Height` de yönelimi uygulanmış hali döndürür. Derinlik haritası kendi açıklamasındaki yönelimle (yoksa görüntününkiyle) döndürülür. |
+| Derinlik hassasiyeti | HEIC, yardımcı derinlik verisini 8 bit nicemler. Beyin testleri derinlikte tam eşitlik beklememelidir. |
+
 ## Yapı
 
 ```
 Packages/TestSetKit/            Swift paketi (yalnızca macOS, uygulama derlemesine girmez — FR-006)
   Sources/TestSetKit/           Şema, etiket modeli, yükleyici, doğrulama, kapsam raporu
   Sources/testset/              CLI: validate | schema | init-labels
+  Sources/testset-labeler/      Bölge işaretleme aracı (FR-009)
   Tests/TestSetKitTests/        Test önce; fikstürler çalışma anında üretilir (HEIC + derinlik)
 TestSet/                        Gerçek kareler ve etiket dosyaları (FR-001)
 scripts/test.sh                 Command Line Tools'ta Swift Testing makro yolu düzeltmesiyle `swift test`

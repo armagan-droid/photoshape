@@ -5,8 +5,15 @@
 ## Ortam
 
 - **Spec Kit CLI kurulu değil.** `.specify/` dizini de yok. Spec 00 için plan ve görevler elle yazıldı (`specs/00-test-seti.plan.md`, `.tasks.md`).
-- **Xcode kurulu değil, yalnızca Command Line Tools var.** Beyin paketleri `swift test` ile test edilebilir (`scripts/test.sh` Swift Testing makro yolunu düzeltir). iOS uygulaması (gövde) Xcode olmadan derlenemez. Spec 01'e başlamadan önce Xcode gerekli.
-- **git-lfs kurulu değil** (spec 00 plan kararı 1).
+- **Xcode 27.2 kuruldu** (2026-11-20). iOS simülatör bileşenleri henüz yok: `sudo xcodebuild -runFirstLaunch` ve `xcodebuild -downloadPlatform iOS` gerekli. `scripts/test.sh` hem Xcode hem Command Line Tools ile çalışır.
+- **git-lfs kuruldu** ve bu depo için etkin. Repo herkese açık (PUBLIC). `TestSet/` altına kare commit etmeden önce görünürlük kararı verilmeli.
+
+## Kapatılanlar (2026-11-20)
+
+- **1:** (a) seçildi, kural Constitution III'e (v1.1.0) iki kol olarak yazıldı. Şablonlu tarif + uyuşmazlık → ipuçları kapanır. Şablonsuz tarif → sahnenin varsayılanı. Spec 04 Hikâye 4, FR-005 ve açık soru 1; spec 05 Hikâye 3/2 güncellendi.
+- **2:** Liste ekrana göre değil etkiye göre sınırlandı (Constitution II, v1.1.0): "çekim kontrolleri (kapalı liste)" ve "eylem ve gezinme öğeleri (açık grup)".
+- **3:** Spec 03 "v4" olarak düzeltildi.
+- **4:** `subject_region` ve `neutral_region` spec 00'a eklendi (FR-008, FR-009). Spec 02 SC-003/004 bu alanlara bağlandı. TestSetKit şeması, testleri, `testset-labeler` ve `TestSet/README.md` güncellendi (2026-11-20, plan: "Kararlar (bölge etiketleri)").
 
 ## Constitution ile çelişkiler (karar gerekir)
 

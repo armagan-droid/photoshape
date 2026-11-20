@@ -31,7 +31,9 @@ struct TestSetTests {
         #expect(depth.kind == .disparity)
         #expect(depth.width == 16 && depth.height == 20)
         #expect(depth.values.count == 16 * 20)
-        #expect(abs(depth.values[1] - (1.0 / 16 + 0.5)) < 0.001)
+        // HEIC stores depth quantized to 8 bits, so values (stored indices 0…319) are close, not exact.
+        #expect(abs(depth.values[16] - 16) < 1.5)
+        #expect(abs(depth.values[16 * 20 - 1] - Float(16 * 20 - 1)) < 1.5)
     }
 
     @Test func unlabeledFramesAreListedAndExcluded() throws {
@@ -113,5 +115,60 @@ struct TestSetTests {
         try FileManager.default.createDirectory(at: testSetDir, withIntermediateDirectories: true)
         let set = try TestSet.locate(environment: [:], startingAt: nested.appendingPathComponent("X.swift").path)
         #expect(set.root.standardizedFileURL.path == testSetDir.standardizedFileURL.path)
+    }
+
+    // MARK: - Orientation (region labels use the displayed orientation)
+
+    @Test func rotatedFrameIsReturnedInDisplayedOrientation() throws {
+        let fx = try FixtureSet(); defer { fx.remove() }
+        try fx.addImage("IMG_0001.heic", depth: true, orientation: 6) // stored 64×80, shown rotated 90° clockwise
+        try fx.addLabels(FixtureSet.labels(id: "IMG_0001"), named: "IMG_0001.json")
+        let frame = try #require(try TestSet.load(at: fx.root).frames.first)
+
+        #expect(frame.metadata.orientation == .right)
+        #expect(frame.metadata.pixelWidth == 80 && frame.metadata.pixelHeight == 64)
+
+        let image = try frame.loadImage()
+        #expect(image.width == 80 && image.height == 64)
+        // Stored top-left marker is displayed at the top-right after a clockwise turn.
+        #expect(pixel(image, x: 76, y: 3).r > 200 && pixel(image, x: 76, y: 3).g < 80)
+        #expect(pixel(image, x: 3, y: 3).r < 230 || pixel(image, x: 3, y: 3).g > 100)
+
+        let depth = try #require(try frame.loadDepth())
+        #expect(depth.width == 20 && depth.height == 16)
+        // Same rule for depth: stored (0,0) → displayed top-right; stored (0, last row) → displayed top-left.
+        #expect(abs(depth.values[19] - 0) < 1.5)
+        #expect(abs(depth.values[0] - Float(19 * 16)) < 1.5)
+        #expect(abs(depth.values[20 * 15] - Float(19 * 16 + 15)) < 1.5) // displayed bottom-left = stored bottom-right
+    }
+
+    @Test func depthOrientationCoversAllEightCases() {
+        // 3×2 map; values are stored indices.
+        let map = DepthMap(kind: .depth, width: 3, height: 2, values: [0, 1, 2, 3, 4, 5])
+        #expect(map.oriented(.up).values == [0, 1, 2, 3, 4, 5])
+        #expect(map.oriented(.upMirrored).values == [2, 1, 0, 5, 4, 3])
+        #expect(map.oriented(.down).values == [5, 4, 3, 2, 1, 0])
+        #expect(map.oriented(.downMirrored).values == [3, 4, 5, 0, 1, 2])
+        #expect(map.oriented(.right).values == [3, 0, 4, 1, 5, 2])
+        #expect(map.oriented(.left).values == [2, 5, 1, 4, 0, 3])
+        #expect(map.oriented(.leftMirrored).values == [0, 3, 1, 4, 2, 5])
+        #expect(map.oriented(.rightMirrored).values == [5, 2, 4, 1, 3, 0])
+        #expect(map.oriented(.right).width == 2 && map.oriented(.right).height == 3)
+    }
+
+    // MARK: - Region gaps
+
+    @Test func missingRegionsAreGapsNotErrors() throws {
+        let fx = try FixtureSet(); defer { fx.remove() }
+        try fx.addFrame("A", ["scene_type": "drink_closeup"])                       // gap: subject
+        try fx.addFrame("B", ["scene_type": "cafe_interior", "light": ["mixed"]])   // gap: neutral
+        try fx.addFrame("C", ["subject_region": ["x": 0.1, "y": 0.1, "w": 0.5, "h": 0.5]])
+        try fx.addFrame("D", ["scene_type": "other"])
+
+        let set = try TestSet.load(at: fx.root)
+        #expect(set.frames.count == 4)
+        #expect(set.report.isValid)
+        #expect(set.report.gaps.map { "\($0.file) \($0.field!)" } == ["A.json subject_region", "B.json neutral_region"])
+        #expect(set.frames.first { $0.id == "C" }?.labels.subjectRegion == Region(x: 0.1, y: 0.1, w: 0.5, h: 0.5))
     }
 }

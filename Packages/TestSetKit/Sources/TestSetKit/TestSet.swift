@@ -94,7 +94,8 @@ public struct TestSet: Sendable {
             case .success(let labels):
                 do {
                     let metadata = try FileMetadata.read(from: imageURL)
-                    candidates.append(TestFrame(id: labels.id, imageURL: imageURL, labels: labels, metadata: metadata))
+                    candidates.append(TestFrame(id: labels.id, imageURL: imageURL, labelURL: labelURL,
+                                                labels: labels, metadata: metadata))
                 } catch {
                     issues.append(LabelIssue(file: relativePath(of: imageURL, in: root), field: nil, message: "\(error)"))
                 }
@@ -116,7 +117,12 @@ public struct TestSet: Sendable {
         }
 
         issues.sort { ($0.file, $0.field ?? "") < ($1.file, $1.field ?? "") }
-        let report = ValidationReport(issues: issues, unlabeled: unlabeled.sorted(), orphanLabels: orphans)
+        let gaps = frames.flatMap { frame in
+            LabelSchema.gaps(for: frame.labels).map {
+                LabelIssue(file: relativePath(of: frame.labelURL, in: root), field: $0.field, message: $0.message)
+            }
+        }
+        let report = ValidationReport(issues: issues, gaps: gaps, unlabeled: unlabeled.sorted(), orphanLabels: orphans)
         return TestSet(root: root, frames: frames, report: report)
     }
 
@@ -136,6 +142,9 @@ public struct LabelIssue: Sendable, Hashable {
 
 public struct ValidationReport: Sendable {
     public let issues: [LabelIssue]
+    /// Expected but missing fields on otherwise valid frames (e.g. regions). Frames stay usable;
+    /// criteria that need the field skip them. `testset validate --strict` fails on gaps.
+    public let gaps: [LabelIssue]
     /// Images without a label file. Listed but not errors; such frames are not used in tests.
     public let unlabeled: [String]
     /// Label files without an image.

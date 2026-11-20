@@ -92,6 +92,8 @@ public struct CoverageReport: Sendable {
             "composition": counts(CompositionLabel.self) { [$0.composition] },
             "composition_issue": counts(CompositionIssue.self) { $0.compositionIssue.map { [$0] } ?? [] },
             "people_visible": counts(PeopleVisible.self) { [$0.peopleVisible] },
+            "subject_region": bools { $0.labels.subjectRegion != nil },
+            "neutral_region": bools { !$0.labels.neutralRegions.isEmpty },
             "has_depth": bools { $0.metadata.hasDepth },
         ]
         self.quotas = quotas.map { QuotaStatus(id: $0.id, title: $0.title, required: $0.required, actual: $0.count(frames)) }

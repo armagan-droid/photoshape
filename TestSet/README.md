@@ -16,8 +16,9 @@ Gerçek kafe/yemek kareleri ve etiket dosyaları. Uygulama derlemesine girmez. B
 ```sh
 cd Packages/TestSetKit
 swift run testset init-labels      # her etiketsiz kareye boş bir IMG_xxxx.json üretir
-swift run testset validate         # hataları, etiketsiz kareleri, kotaları ve dağılımı gösterir
-swift run testset validate --strict  # kotalar dolmadıysa da 1 ile çıkar (SC-002 kapısı)
+swift run testset-labeler          # bölgeleri kare üzerinde sürükleyerek işaretle (aşağıda)
+swift run testset validate         # hataları, eksik bölgeleri, etiketsiz kareleri, kotaları ve dağılımı gösterir
+swift run testset validate --strict  # kotalar dolmadıysa ya da bölge eksikse de 1 ile çıkar (SC-002 kapısı)
 swift run testset schema > /tmp/labels.schema.json   # editör tamamlaması için JSON Schema
 ```
 
@@ -35,6 +36,10 @@ swift run testset schema > /tmp/labels.schema.json   # editör tamamlaması içi
   "sharpness": "sharp",
   "composition": "bad",
   "composition_issue": "subject_cut",
+  "subject_region": {"x": 0.28, "y": 0.31, "w": 0.46, "h": 0.4},
+  "neutral_region": [
+    {"x": 0.62, "y": 0.12, "w": 0.1, "h": 0.08}
+  ],
   "people_visible": "hands",
   "pair_id": "latte-pencere",
   "notes": "fincan kenarı kesik"
@@ -46,6 +51,22 @@ Kurallar:
 - `composition_issue` yalnızca `composition = "bad"` olduğunda yazılır ve o zaman zorunludur.
 - `has_depth`, `device` ve `lens` yazılmaz, dosyadan okunur.
 - Bilinmeyen alan hata verir; yazım hatalarını böyle yakalarız.
+- Bölgeler elle yazılmaz, `testset-labeler` ile işaretlenir. Eksik bölge hata değil, "eksik" olarak raporlanır; kare testlerde kullanılmaya devam eder. `--strict` ise eksik bölgede başarısız olur.
+
+## Bölgeleri işaretleme (`testset-labeler`)
+
+Kare başına hedef: 2–3 dakika (bölgeler dahil).
+
+- Kare, Fotoğraflar'da görüldüğü yönelimde açılır. Koordinatlar 0–1 arası, sol üstten başlar.
+- **S**: konu modu. Ana konunun (tabak, fincan) çevresine sürükle. Yeni bir sürükleme eskisinin yerine geçer. Birden fazla konu varsa en önemlisini işaretle.
+- **N**: nötr modu. Gerçekte beyaz ya da gri olan bir yüzeyin (tabak, fincan, peçete) üzerine sürükle. Birden fazla bölge eklenebilir. **Patlamış (bembeyaz, dokusuz) alanı işaretleme.**
+- **⌫**: geçerli moddaki son bölgeyi siler. **← / →**: önceki / sonraki kare.
+- Her değişiklik hemen JSON'a kaydedilir. Yalnızca `subject_region` ve `neutral_region` yazılır, diğer alanlara dokunulmaz.
+- Listedeki işaretler: yeşil = tamam, turuncu = eksik bölge var, kırmızı = etiket hatası, kesikli = etiket dosyası yok.
+
+Hangi karede zorunlu:
+- `subject_region`: `scene_type` `cafe_interior` ya da `other` değilse.
+- `neutral_region`: `light` içinde `warm_indoor` ya da `mixed` varsa.
 
 Alanların ve kotaların tamamı için bkz. `specs/00-test-seti.md`.
 
@@ -56,6 +77,7 @@ import TestSetKit
 
 let set = try TestSet.locate()   // $PHOTOSHAPE_TESTSET ya da depo kökündeki TestSet/
 let dimWarm = set.frames { $0.labels.light.isSuperset(of: [.dim, .warmIndoor]) }
-let image = try dimWarm[0].loadImage()
-let depth = try dimWarm[0].loadDepth()   // derinlik yoksa nil
+let image = try dimWarm[0].loadImage()   // Fotoğraflar'daki yönelimde; bölgeler bu uzaydadır
+let depth = try dimWarm[0].loadDepth()   // aynı yönelimde; derinlik yoksa nil
+let subject = dimWarm[0].labels.subjectRegion?.pixelRect(width: image.width, height: image.height)
 ```

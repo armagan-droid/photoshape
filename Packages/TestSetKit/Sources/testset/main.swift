@@ -1,11 +1,11 @@
 // testset — spec 00 validation tool.
 //
-//   testset validate [DIR] [--strict] [--json]   report label errors, unlabeled frames, coverage
+//   testset validate [DIR] [--strict] [--json]   report label errors, missing regions, unlabeled frames, coverage
 //   testset schema                               print the label JSON Schema (derived from LabelSchema)
 //   testset init-labels [DIR]                    write a label skeleton next to every unlabeled image
 //
 // DIR defaults to $PHOTOSHAPE_TESTSET or the nearest TestSet/ above the current directory.
-// Exit code: 0 ok, 1 label errors (or, with --strict, unmet quotas), 2 usage/IO error.
+// Exit code: 0 ok, 1 label errors (or, with --strict, unmet quotas or missing regions), 2 usage/IO error.
 
 import Foundation
 import TestSetKit
@@ -43,6 +43,7 @@ case "validate":
             "root": set.root.path,
             "valid_frames": set.frames.count,
             "issues": set.report.issues.map { ["file": $0.file, "field": $0.field as Any? ?? NSNull(), "message": $0.message] as [String: Any] },
+            "gaps": set.report.gaps.map { ["file": $0.file, "field": $0.field as Any? ?? NSNull(), "message": $0.message] as [String: Any] },
             "unlabeled": set.report.unlabeled,
             "orphan_labels": set.report.orphanLabels,
             "distribution": coverage.distribution,
@@ -66,6 +67,13 @@ case "validate":
             set.report.orphanLabels.forEach { print("  \($0)") }
             print()
         }
+        if !set.report.gaps.isEmpty {
+            print("! Missing regions (\(set.report.gaps.count)) — mark them with `swift run testset-labeler`; --strict fails on these")
+            for gap in set.report.gaps {
+                print("  \(gap.file)\(gap.field.map { " · \($0)" } ?? ""): \(gap.message)")
+            }
+            print()
+        }
         if !set.report.unlabeled.isEmpty {
             print("• Unlabeled, not used in tests (\(set.report.unlabeled.count)) — run `testset init-labels`")
             set.report.unlabeled.forEach { print("  \($0)") }
@@ -87,7 +95,7 @@ case "validate":
         print(coverage.allQuotasMet ? "All quotas met — brain acceptance criteria can be measured."
                                     : "Quotas not met yet — brain acceptance criteria are not \"measured\" (spec 00).")
     }
-    let ok = set.report.isValid && (!strict || coverage.allQuotasMet)
+    let ok = set.report.isValid && (!strict || (coverage.allQuotasMet && set.report.gaps.isEmpty))
     exit(ok ? 0 : 1)
 
 case "schema":

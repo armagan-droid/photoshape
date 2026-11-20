@@ -8,6 +8,9 @@ public struct FileMetadata: Sendable, Hashable {
     public var hasDepth: Bool
     public var device: String?
     public var lens: String?
+    /// EXIF orientation of the stored pixels. Everything this package returns is already oriented.
+    public var orientation: CGImagePropertyOrientation
+    /// Displayed (oriented) size, the space region labels are expressed in.
     public var pixelWidth: Int
     public var pixelHeight: Int
 
@@ -20,12 +23,17 @@ public struct FileMetadata: Sendable, Hashable {
         let tiff = props[kCGImagePropertyTIFFDictionary] as? [CFString: Any]
         let exif = props[kCGImagePropertyExifDictionary] as? [CFString: Any]
         let exifAux = props[kCGImagePropertyExifAuxDictionary] as? [CFString: Any]
+        let orientation = (props[kCGImagePropertyOrientation] as? NSNumber)
+            .flatMap { CGImagePropertyOrientation(rawValue: $0.uint32Value) } ?? .up
+        let rawWidth = props[kCGImagePropertyPixelWidth] as? Int ?? 0
+        let rawHeight = props[kCGImagePropertyPixelHeight] as? Int ?? 0
         return FileMetadata(
             hasDepth: DepthMap.auxiliaryInfo(source) != nil,
             device: tiff?[kCGImagePropertyTIFFModel] as? String,
             lens: (exif?[kCGImagePropertyExifLensModel] ?? exifAux?[kCGImagePropertyExifAuxLensModel]) as? String,
-            pixelWidth: props[kCGImagePropertyPixelWidth] as? Int ?? 0,
-            pixelHeight: props[kCGImagePropertyPixelHeight] as? Int ?? 0
+            orientation: orientation,
+            pixelWidth: orientation.swapsAxes ? rawHeight : rawWidth,
+            pixelHeight: orientation.swapsAxes ? rawWidth : rawHeight
         )
     }
 }
@@ -82,27 +90,75 @@ public struct DepthMap: Sendable, Hashable {
                 }
             }
         }
-        return DepthMap(kind: kind, width: width, height: height, values: values)
+        // The depth description carries its own orientation; fall back to the image's.
+        let imageProps = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
+        let rawOrientation = (desc[kCGImagePropertyOrientation] ?? imageProps?[kCGImagePropertyOrientation]) as? NSNumber
+        let orientation = rawOrientation.flatMap { CGImagePropertyOrientation(rawValue: $0.uint32Value) } ?? .up
+        return DepthMap(kind: kind, width: width, height: height, values: values).oriented(orientation)
     }
+
+    /// Applies an EXIF orientation so the map lines up with the displayed image.
+    func oriented(_ orientation: CGImagePropertyOrientation) -> DepthMap {
+        guard orientation != .up else { return self }
+        let (w, h) = (width, height)
+        let outW = orientation.swapsAxes ? h : w, outH = orientation.swapsAxes ? w : h
+        var out = [Float](repeating: 0, count: values.count)
+        for oy in 0..<outH {
+            for ox in 0..<outW {
+                // Source pixel shown at displayed position (ox, oy).
+                let (sx, sy): (Int, Int)
+                switch orientation {
+                case .up: (sx, sy) = (ox, oy)
+                case .upMirrored: (sx, sy) = (w - 1 - ox, oy)
+                case .down: (sx, sy) = (w - 1 - ox, h - 1 - oy)
+                case .downMirrored: (sx, sy) = (ox, h - 1 - oy)
+                case .leftMirrored: (sx, sy) = (oy, ox)
+                case .right: (sx, sy) = (oy, h - 1 - ox)
+                case .rightMirrored: (sx, sy) = (w - 1 - oy, h - 1 - ox)
+                case .left: (sx, sy) = (w - 1 - oy, ox)
+                }
+                out[oy * outW + ox] = values[sy * w + sx]
+            }
+        }
+        return DepthMap(kind: kind, width: outW, height: outH, values: out)
+    }
+}
+
+extension CGImagePropertyOrientation {
+    var swapsAxes: Bool { [.left, .right, .leftMirrored, .rightMirrored].contains(self) }
 }
 
 /// One labeled frame of the test set. Image and depth are loaded on demand.
 public struct TestFrame: Sendable, Hashable {
     public let id: String
     public let imageURL: URL
+    public let labelURL: URL
     public let labels: FrameLabels
     public let metadata: FileMetadata
 
-    public func loadImage() throws -> CGImage {
-        let options = [kCGImageSourceShouldCache: true] as CFDictionary
-        guard let source = CGImageSourceCreateWithURL(imageURL as CFURL, nil),
-              let image = CGImageSourceCreateImageAtIndex(source, 0, options) else {
-            throw TestSetError.unreadableImage(imageURL.lastPathComponent)
+    /// Full-resolution image in displayed orientation (the space region labels use).
+    public func loadImage() throws -> CGImage { try Self.loadOrientedImage(imageURL) }
+
+    /// Displayed-orientation image, optionally downscaled so the long side is at most `maxPixelSize`.
+    public static func loadOrientedImage(_ url: URL, maxPixelSize: Int? = nil) throws -> CGImage {
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+              let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any] else {
+            throw TestSetError.unreadableImage(url.lastPathComponent)
+        }
+        let longSide = max(props[kCGImagePropertyPixelWidth] as? Int ?? 0, props[kCGImagePropertyPixelHeight] as? Int ?? 0)
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: min(maxPixelSize ?? longSide, longSide),
+        ]
+        guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
+            throw TestSetError.unreadableImage(url.lastPathComponent)
         }
         return image
     }
 
-    /// `nil` when the file carries no depth data.
+    /// `nil` when the file carries no depth data. Oriented like `loadImage()`.
     public func loadDepth() throws -> DepthMap? { try DepthMap.read(from: imageURL) }
 }
 
