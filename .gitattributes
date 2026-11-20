@@ -1,0 +1,6 @@
+# Test set images go through Git LFS (spec 00, plan decision 1).
+TestSet/**/*.heic filter=lfs diff=lfs merge=lfs -text
+TestSet/**/*.HEIC filter=lfs diff=lfs merge=lfs -text
+TestSet/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+TestSet/**/*.JPG filter=lfs diff=lfs merge=lfs -text
+TestSet/**/*.png filter=lfs diff=lfs merge=lfs -text
