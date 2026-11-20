@@ -19,7 +19,7 @@ Bu spec şunları kapsar:
 - tarifleri ayarlamak için geliştirici ekranı,
 - ücretsiz/premium sınırının yapısı.
 
-**Kapsam dışı:** Cilt tonu koruma portre kategorisine (v3+) taşındı. Kafe/yemekte eller görünebilir; bu sürümde özel işlem görmez.
+**Kapsam dışı:** Cilt tonu koruma portre kategorisine (v4) taşındı. Kafe/yemekte eller görünebilir; bu sürümde özel işlem görmez.
 
 ## Kullanıcı senaryoları
 

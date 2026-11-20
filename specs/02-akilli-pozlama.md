@@ -86,8 +86,8 @@ Kullanıcı arkası pencereye dönük bir kahveyi çeker.
 Beyin kriterleri macOS'ta test setinde ölçülür:
 - **SC-001:** `exposure = under` ve `exposure = over` etiketli karelerin ≥ %90'ında karar doğru yönde düzeltme önerir.
 - **SC-002:** `exposure = good` etiketli karelerin ≥ %85'inde önerilen düzeltme "değişiklik gerekmez" bandında kalır. Bant planda tanımlanır.
-- **SC-003:** `warm_indoor` ve `mixed` etiketli karelerde, kararla düzeltilmiş görüntünün nötr referans bölgesindeki (tabak, fincan gibi beyaz/gri yüzey) renk kayması, düzeltilmemiş haline göre en az %50 azalır. Tamamen sıfırlanmaz (FR-003).
-- **SC-004:** `backlit` etiketli karelerde konu bölgesinin ortalama parlaklığı, iOS otomatiğinin verdiği sonuca göre artar ve konuda patlamış alan oluşmaz.
+- **SC-003:** `warm_indoor` ve `mixed` etiketli karelerde, kararla düzeltilmiş görüntünün `neutral_region` etiketiyle (spec 00) işaretli bölgesindeki renk kayması, düzeltilmemiş haline göre en az %50 azalır. Tamamen sıfırlanmaz (FR-003).
+- **SC-004:** `backlit` etiketli karelerde `subject_region` etiketiyle (spec 00) işaretli konu bölgesinin ortalama parlaklığı, iOS otomatiğinin verdiği sonuca göre artar ve konuda patlamış alan oluşmaz.
 - **SC-005:** Işık sinyali (`dim`, `backlit`, `mixed`), etiketli kareler üzerinde ≥ %80 doğrulukla doğru durumu bulur.
 
 Telefonda (iPhone 12) ölçülenler:

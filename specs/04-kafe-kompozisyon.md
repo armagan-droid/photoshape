@@ -48,8 +48,9 @@ Kompozisyon ipuçları yalnızca sahne türü uyuşuyorsa verilir (Constitution 
 ### Hikâye 4 — Sahne uyuşmazlığında ipuçları kapanır (P1)
 
 **Kabul senaryoları**
-1. **Verilen:** seçili tarifin şablonu `drink_closeup` ve sahne `food_top_down`. **O zaman:** kompozisyon ipuçları sahnenin kendi türüne göre verilir (varsa genel kurallar) ya da tamamen kapanır. Renk görünümü yine uygulanır. [NEEDS CLARIFICATION: açık soru 1]
-2. **Verilen:** sahne `other`. **O zaman:** hiçbir kompozisyon ipucu gösterilmez. Işık tavsiyesi yine gösterilebilir.
+1. **Verilen:** seçili tarifin şablonu `drink_closeup` ve sahne `food_top_down`. **O zaman:** kompozisyon ipuçları tamamen kapanır; sahnenin varsayılan şablonuna geçilmez. Renk görünümü ve ışık tavsiyesi yine uygulanır (Constitution III).
+2. **Verilen:** seçili tarifin kompozisyon şablonu yok (örneğin şablonsuz hazır görünümler ve "Doğal"). **O zaman:** yönlendirme sahnenin kendi varsayılan şablonuyla yapılır.
+3. **Verilen:** sahne `other`. **O zaman:** hiçbir kompozisyon ipucu gösterilmez. Işık tavsiyesi yine gösterilebilir.
 
 ### Hikâye 5 — Kullanıcı ipuçlarını rahatsız edici bulmaz (P1)
 
@@ -73,7 +74,7 @@ Kompozisyon ipuçları yalnızca sahne türü uyuşuyorsa verilir (Constitution 
 - **FR-002:** Kompozisyon puanlaması beyin modülünde yapılır: girdi kare, sahne türü, şablon ve cihaz eğimi; çıktı puan ve en önemli tek düzeltme önerisi (yön + tür).
 - **FR-003:** Öneriler bir **yönlendirme talimatı** olarak üretilir: tür (yaklaş, uzaklaş, sola kaydır, düzleştir, eğ, ışığa yaklaş vb.), yön, öncelik. Kullanıcıya gösterilecek cümle, talimattan iki dilde üretilir. Bu talimat yapısı, GymSpot ile paylaşılabilecek ortak katmanın arayüz sınırıdır (bkz. `docs/ortak-kamera-paketi.md`).
 - **FR-004:** Şablonlar ve kurallar kodda değil, veri olarak tanımlanır. Yeni sahne türü ya da kategori eklemek kural verisi eklemekle başlar. Kod değişikliği istisna olmalıdır.
-- **FR-005:** Kompozisyon ipuçları yalnızca sahne türü tarifin şablonuyla uyuşuyorsa ya da tarifin şablonu yoksa verilir. Tarifin şablonu yoksa sahnenin kendi varsayılan şablonu kullanılır.
+- **FR-005:** Tarif bir kompozisyon şablonu taşıyorsa ipuçları yalnızca sahne türü şablonla uyuşuyorsa verilir; uyuşmuyorsa kompozisyon ipuçları kapanır. Tarif şablon taşımıyorsa sahnenin kendi varsayılan şablonu kullanılır (Constitution III, v1.1.0).
 - **FR-006:** Işık tavsiyesi spec 02'nin ışık sinyalinden üretilir. Işığı değiştirmeye çalışan bir işlem yapılmaz.
 - **FR-007:** Yönlendirme cümleleri en fazla 6 kelimedir, iki dildedir ve teknik terim içermez (Constitution II ve VI).
 - **FR-008:** İpuçlarının görünme ve kaybolma kuralları (en az süre, tek ipucu, ısrar etmeme) davranış olarak test edilebilir. Zaman ve kare akışı benzetilebilir olmalıdır.
@@ -113,7 +114,7 @@ Kullanıcıyla ölçülenler:
 
 ## Açık sorular
 
-1. **Uyuşmazlık davranışı:** Tarifin şablonu sahneyle uyuşmuyorsa, (a) tüm kompozisyon ipuçları mı kapansın (senin notundaki kural), yoksa (b) sahnenin kendi varsayılan şablonuna mı geçilsin? (b) daha yardımcı, ama "tarifin kompozisyonu" vaadinden sapıyor. Öneri: MVP tarifleri şablonsuz olduğu için (b) varsayılan, (a) yalnızca spec 05'teki referans tarifleri için.
-2. **Kullanıcının ipuçlarını kapatması:** İpuçlarını tamamen kapatmak için bir seçenek olsun mu? Bu bir teknik ayar sayılmaz, ama kontrol listesine eklemek constitution değişikliği gerektirir (Constitution II).
+1. **Uyuşmazlık davranışı — karar verildi (2026-11-20):** Şablonlu tarifte sahne uyuşmazsa ipuçları kapanır (seçenek a). Şablonsuz tarifte sahnenin varsayılan şablonu kullanılır. Kural Constitution III'e (v1.1.0) yazıldı. MVP hazır görünümlerinin şablon taşıyıp taşımayacağına tarifler ayarlanırken karar verilecek. Şablon taşırlarsa, uyuşmayan sahnelerde kompozisyon ipucu vermezler.
+2. **Kullanıcının ipuçlarını kapatması:** İpuçlarını tamamen kapatmak için bir seçenek olsun mu? Kamera ekranının davranışını değiştiren kalıcı bir ayar olduğu için çekim kontrolleri grubuna girer; eklenirse constitution değişikliği gerekir (Constitution II, v1.1.0).
 3. **Lens önerisi:** Uygulama kullanıcıya lens değiştirmesini önermeli mi ("normal'e geç"), yoksa lensi kendisi mi değiştirmeli? Kendisi değiştirmesi kafa karıştırıcı olabilir.
 4. **Sınıflandırıcı kaynağı:** Vision'ın hazır görüntü sınıflandırması `drink_closeup` / `food_angled` ayrımını yapmaya yetmeyebilir. Yerli bir çözümle (Create ML ile eğitilmiş küçük bir model) mi gidilecek? Eğitim verisi test setinden ayrı olmalı. Bu, ikinci bir fotoğraf seti gerektirir mi?

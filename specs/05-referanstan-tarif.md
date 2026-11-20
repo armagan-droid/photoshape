@@ -32,7 +32,7 @@ Rekabetteki asıl fark budur. "Yapay zekâ fotoğraf koçu" uygulamaları ayar v
 
 **Kabul senaryoları**
 1. **Verilen:** referans `food_top_down`, kullanıcının sahnesi `drink_closeup`. **O zaman:** renk ve ton havası uygulanır, kompozisyon ipuçları kapanır. Kullanıcıya bir hata ya da uyarı gösterilmez.
-2. **Verilen:** referans kafe/yemek değil (örneğin bir manzara). **O zaman:** renk havası yine aktarılır. Sahne türü `other` olur ve kompozisyon ipucu verilmez.
+2. **Verilen:** referans kafe/yemek değil (örneğin bir manzara). **O zaman:** renk havası yine aktarılır. Referansın sahne türü `other` olur ve tarif kompozisyon şablonu taşımaz. Bu durumda yönlendirme, kullanıcının sahnesinin varsayılan şablonuyla yapılır (Constitution III, v1.1.0).
 
 ### Hikâye 4 — Referanstaki insanların cilt rengi tarifi bozmaz (P1)
 

@@ -51,11 +51,23 @@ Her kare için aynı ada sahip bir etiket dosyası bulunur (örneğin `IMG_0012.
 | `sharpness` | evet | `sharp`, `motion_blur`, `focus_miss` | Netlik |
 | `composition` | evet | `good`, `bad` | İnsan yargısı |
 | `composition_issue` | `composition = bad` ise | `too_close`, `too_far`, `tilted`, `subject_cut`, `cluttered_edges`, `off_center_unintended`, `wrong_angle` | Ana sorun |
+| `subject_region` | ana konu varsa evet (`cafe_interior` gibi ana konusu olmayan sahnelerde isteğe bağlı) | tek dikdörtgen: `x`, `y`, `w`, `h` | Ana konunun bölgesi (tabak, fincan). Birden fazla konu varsa en önemlisi işaretlenir |
+| `neutral_region` | `light` içinde `warm_indoor` ya da `mixed` varsa evet; diğer karelerde isteğe bağlı | bir ya da daha fazla dikdörtgen: `x`, `y`, `w`, `h` | Gerçekte beyaz ya da gri olan yüzey (tabak, fincan, peçete). Patlamış alan işaretlenmez |
 | `people_visible` | evet | `none`, `hands`, `faces` | İleride cilt tonu testleri için |
 | `has_depth` | otomatik | `true` / `false` | Dosyadan okunur, elle girilmez |
 | `device`, `lens` | otomatik | — | Dosyadan okunur |
 | `pair_id` | hayır | serbest | Aynı sahnenin farklı denemelerini bağlar (örneğin iyi ve kötü pozlanmış hali) |
 | `notes` | hayır | serbest | — |
+
+### Bölge etiketleri
+
+- Koordinatlar 0–1 arasına normalize edilir. Başlangıç sol üst köşedir. Koordinatlar görüntünün yönelimi uygulanmış, yani Fotoğraflar'da görüldüğü hali üzerinde verilir.
+- Dikdörtgen görüntü sınırları içinde kalmalıdır ve genişliği ile yüksekliği sıfırdan büyük olmalıdır.
+- Bu etiketleri kullanan kabul kriterleri:
+  - spec 02 SC-003 (`neutral_region`: renk kayması ölçümü),
+  - spec 02 SC-004 (`subject_region`: ters ışıkta konu parlaklığı).
+  Sonradan şunlar da bu etiketlerden yararlanabilir: spec 04 (kompozisyon ve kesik konu), spec 06 (konu netliği).
+- Bu alanlar yeni olduğu için eklenmeleri mevcut etiket dosyalarını bozmaz (FR-007). Koşullu zorunluluk yalnızca `--strict` doğrulamada ya da eksiklik olarak raporlanır; plan aşamasında hangisinin kullanılacağına karar verilir.
 
 ## Zor durum kotaları (asgari)
 
@@ -85,6 +97,8 @@ Kötü pozlanmış örnekleri elde etmek için aynı sahne, telefonun Kamera uyg
 - **FR-004:** Beyin testleri sete yalnızca etiketlere göre filtreleme yapan tek bir erişim noktasından ulaşır. Dosya yolları testlere gömülmez.
 - **FR-005:** Otomatik alanlar (`has_depth`, `device`, `lens`) dosyanın kendisinden çıkarılır, elle girilmez.
 - **FR-006:** Test seti uygulama derlemesine girmez.
+- **FR-008:** Doğrulama aracı bölge etiketlerinin geçerliliğini denetler: sınırlar içinde olma, sıfırdan büyük alan, koşullu zorunluluk.
+- **FR-009:** Bölge etiketlerini girmek piksel koordinatı elle hesaplamayı gerektirmez. Etiketleyici bölgeyi kare üzerinde görerek işaretleyebilmelidir. Yöntem plan aşamasında seçilir.
 - **FR-007:** Set ileride yeni kategoriler (seyahat, portre) ve referans ekran görüntüleri (spec 05) için genişletilebilir. Yeni kategori eklemek mevcut etiket dosyalarını bozmaz.
 
 ## Temel varlıklar
@@ -101,7 +115,7 @@ Kötü pozlanmış örnekleri elde etmek için aynı sahne, telefonun Kamera uyg
 
 ## Elle yapılacaklar
 
-- Çekim ve etiketleme geliştirici tarafından yapılır. Kare başına 1–2 dakika hedeflenir.
+- Çekim ve etiketleme geliştirici tarafından yapılır. Bölge etiketleri dahil kare başına 2–3 dakika hedeflenir.
 
 ## Açık sorular
 

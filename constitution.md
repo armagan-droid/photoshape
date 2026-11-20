@@ -26,14 +26,17 @@ Fotoğraftan anlamayan, Instagram için güzel fotoğraf çekmek isteyen insanla
 
 ### II. Kullanıcı hiçbir teknik ayar görmez
 
-- Arayüzde sayı, birim ya da fotoğrafçılık terimi gösterilmez: ISO, enstantane, EV, Kelvin, f/, "pozlama", "beyaz dengesi", "histogram" gibi.
-- Kullanıcıya açık olan kontrollerin tam listesi:
-  - lens düğmeleri ("geniş / normal / yakın"),
-  - dokunarak netleme,
-  - tek bir "görünüm gücü" kaydırıcısı,
-  - görünüm seçimi,
-  - deklanşör.
-  Ayrı bir parlaklık kaydırıcısı yoktur. Bu listeye ekleme yapmak constitution değişikliği gerektirir.
+- Arayüzün hiçbir yerinde teknik sayı, birim ya da fotoğrafçılık terimi gösterilmez: ISO, enstantane, EV, Kelvin, f/, "pozlama", "beyaz dengesi", "histogram" gibi. Fiyat ve tarih gibi teknik olmayan bilgiler bu kuralın dışındadır.
+- Arayüz öğeleri iki gruptadır. Ayrım ekrana göre değil, öğenin etkisine göre yapılır:
+  - **Çekim kontrolleri (kapalı liste):** Fotoğrafın nasıl çekildiğini, nasıl göründüğünü ya da kamera ekranının nasıl davrandığını değiştiren her kontrol ve kalıcı ayar bu gruptadır, hangi ekranda olursa olsun. Tam liste:
+    - lens düğmeleri ("geniş / normal / yakın"),
+    - dokunarak netleme,
+    - tek bir "görünüm gücü" kaydırıcısı,
+    - görünüm seçimi ("Doğal" dahil),
+    - deklanşör.
+    Ayrı bir parlaklık kaydırıcısı yoktur. Bu listeye ekleme yapmak constitution değişikliği gerektirir. Örneğin "yönlendirmeleri kapat" ya da "konumu ekle" gibi bir ayar eklemek de değişiklik gerektirir.
+  - **Eylem ve gezinme öğeleri (açık grup):** Çekilmiş bir sonucu kullanan ya da uygulamada dolaşmayı sağlayan öğeler. Örnekler: son çekim önizlemesi, Paylaş, Instagram'a gönder, "diğer kareler"den kare seçimi, "kendi fotoğrafını ekle", görünümü yeniden adlandırma ve silme, ödeme ekranı, satın alımları geri yükleme, izin ve Ayarlar yönlendirmeleri. Bu öğelerin listede olması gerekmez, ama her biri bir spec'te tanımlanmış olmalıdır.
+  - Ayrım ölçütü: Öğe, sonraki çekimlerin sonucunu ya da kamera ekranının davranışını değiştiriyorsa çekim kontrolüdür. Var olan bir sonucu kullanıyor ya da yalnızca bir yere götürüyorsa eylem öğesidir.
 - Yönlendirmeler ok ve kısa cümleyle verilir: "biraz geri çekil", "telefonu düz tut", "pencereye yaklaş".
 - Uygulamanın teknik bir kararı yapamadığı durumlarda (örneğin derinlik verisi yoksa bulanıklığın atlanması) kullanıcıya hata gösterilmez. Uygulama sessizce en iyi alternatifi uygular.
 - Geliştirici ekranları bu ilkeden muaftır, ancak yalnızca geliştirici derlemelerinde bulunur, App Store sürümüne girmez.
@@ -49,7 +52,9 @@ Fotoğraftan anlamayan, Instagram için güzel fotoğraf çekmek isteyen insanla
 - Tarif sürümlü ve serileştirilebilir bir veridir. Aynı tarif aynı girdiye uygulandığında her zaman aynı çıktıyı verir (deterministik).
 - Aktarım kuralları:
   - Renk ve ton havası her sahneye aktarılır.
-  - Kompozisyon yalnızca sahne türleri uyuşuyorsa aktarılır; uyuşmuyorsa kompozisyon ipuçları kapanır.
+  - Tarif bir kompozisyon şablonu taşıyorsa şablon yalnızca sahne türleri uyuşuyorsa aktarılır. Uyuşmuyorsa kompozisyon ipuçları kapanır; sahnenin varsayılan şablonuna geçilmez.
+  - Tarif kompozisyon şablonu taşımıyorsa aktarılacak bir kompozisyon yoktur. Bu durumda yönlendirme sahnenin kendi varsayılan şablonuyla yapılır. Şablonsuz tarif, "kompozisyon konusunda söz söylemiyor" demektir. Bu nedenle bu durum kuralın istisnası değil, kuralın ikinci koludur.
+  - Işık tavsiyesi kompozisyondan bağımsızdır. Kompozisyon ipuçları kapalıyken de gösterilebilir.
   - Işık değiştirilemez, yalnızca tavsiye edilir.
 
 ### IV. Beyin gövdeden ayrıdır ve test edilerek yazılır
@@ -129,11 +134,17 @@ Geliştirici, aynı anda GymSpot (Muay Thai için kamerayla eskiv ve form koçlu
   - **PATCH:** dil düzeltmesi.
 - Plan ve görev incelemelerinde her ilkeye uyum kontrol edilir. İhlal gerekiyorsa plan belgesinde "karmaşıklık gerekçesi" olarak yazılır.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-19 | **Last Amended**: 2026-11-19
+## Değişiklik geçmişi
+
+- **1.1.0 (2026-11-20):**
+  - II: Arayüz öğeleri "çekim kontrolleri (kapalı liste)" ve "eylem ve gezinme öğeleri" olarak ikiye ayrıldı; ayrım ölçütü yazıldı. Teknik sayı yasağına fiyat/tarih istisnası eklendi.
+  - III: Şablonlu ve şablonsuz tarif için kompozisyon aktarım kuralı netleştirildi; ışık tavsiyesinin kompozisyondan bağımsız olduğu yazıldı.
+
+**Version**: 1.1.0 | **Ratified**: 2026-11-19 | **Last Amended**: 2026-11-20
 
 ## Açık sorular
 
-1. Konum bilgisi: Varsayılan, kaydedilen fotoğrafa konum eklememek. Kullanıcıya "konumu ekle" seçeneği sunulmalı mı? Bu bir teknik ayar sayılır mı?
+1. Konum bilgisi: Varsayılan, kaydedilen fotoğrafa konum eklememek. Kullanıcıya "konumu ekle" seçeneği sunulmalı mı? Sunulursa kaydedilen dosyayı değiştiren kalıcı bir ayar olur, yani çekim kontrolleri grubuna girer (II) ve constitution değişikliği gerektirir.
 2. "Görünüm gücü" kaydırıcısının seçimi görünüm başına mı hatırlanmalı, yoksa genel bir değer mi olmalı?
 3. Statik paket indirmede bile bir IP adresi kaçınılmaz olarak sunucuya ulaşır. Gizlilik metninde bu nasıl ifade edilecek? (Apple'ın barındırması seçilirse soru büyük ölçüde ortadan kalkar.)
 4. Uygulama boyutu için bir üst sınır koymak istiyor musun? Türkiye'de hücresel indirmede boyut önemli olabilir. Öneri: ilk sürüm 50 MB altında.
