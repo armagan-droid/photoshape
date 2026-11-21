@@ -1,0 +1,6 @@
+// photoshape app settings. Change the bundle identifier and team here before signing for a device.
+PRODUCT_BUNDLE_IDENTIFIER = app.photoshape.ios
+DEVELOPMENT_TEAM =
+MARKETING_VERSION = 0.1.0
+CURRENT_PROJECT_VERSION = 1
+IPHONEOS_DEPLOYMENT_TARGET = 18.0
