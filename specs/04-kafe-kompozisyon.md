@@ -25,6 +25,13 @@
 
 1. Örnekte ya da canlı görüntüde birden fazla kişi varsa MVP'de en büyük (en öndeki) kişi esas alınır.
 
+## Işık (2026-11-21)
+
+- **FR-L1:** Işık okuması bir beyin modülüdür: konunun arka planına göre parlaklığı, konunun sağ/sol yarısının parlaklık dengesi. Örnek için bir kez, canlı görüntü için yönlendirmeyle birlikte.
+- **FR-L2:** Loş ortam görüntüden değil kameranın ölçümünden (yüksek ışık hassasiyeti) anlaşılır, çünkü otomatik pozlama görüntüyü her zaman orta parlaklığa çeker.
+- **FR-L3:** Tavsiyeler: ters ışık → "ışığı yanına al"; loş → "daha aydınlık yere geç"; örnekte belirgin yan ışık varken canlıda yoksa → "ışık soldan/sağdan gelsin" (fotoğrafçının gözünden). Örnek de ters ışıklıysa ters ışık uyarısı verilmez.
+- **FR-L4:** Tek kanal: ekranda yine tek cümle (Constitution II). Sıra: konuyu kareye al → ters ışık / loş → mesafe → konum → poz → ışık yönü. Hikâye 5.1'deki "bir kompozisyon + bir ışık" iki kanallı tanımın yerini bu sıra alır.
+
 ## Taslak (2026-11-21, Constitution 1.2.0)
 
 1. Örnek seçiliyken canlı görüntünün üstünde örneğin yarı saydam kenar çizgileri durur. Örnekte kişi varsa iskeleti de çizilir.

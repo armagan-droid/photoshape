@@ -188,6 +188,74 @@
         }
       }
     },
+    "guide.light.backlit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Put the light to the side"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Işığı yanına al"
+          }
+        }
+      }
+    },
+    "guide.light.dim": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find brighter light"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daha aydınlık yere geç"
+          }
+        }
+      }
+    },
+    "guide.light.fromLeft": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light from the left"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Işık soldan gelsin"
+          }
+        }
+      }
+    },
+    "guide.light.fromRight": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light from the right"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Işık sağdan gelsin"
+          }
+        }
+      }
+    },
     "guide.panLeft": {
       "extractionState": "manual",
       "localizations": {

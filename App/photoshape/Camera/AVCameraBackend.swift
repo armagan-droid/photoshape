@@ -68,6 +68,15 @@ final class AVCameraBackend: NSObject, CameraBackend, @unchecked Sendable {
         }
     }
 
+    func isLowLight() async -> Bool {
+        await onQueue {
+            guard let device = self.device else { return false }
+            // Auto exposure keeps the image mid-bright even in a dark café; the sensitivity it needs tells the truth.
+            let isoLimit = min(1600, device.activeFormat.maxISO * 0.6)
+            return device.iso >= isoLimit || device.exposureDuration.seconds >= 1.0 / 20
+        }
+    }
+
     func focus(atDevicePoint point: CGPoint) async {
         await onQueue {
             self.lastTapUptime = ProcessInfo.processInfo.systemUptime

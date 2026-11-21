@@ -105,14 +105,18 @@ final class CameraModel {
         }
         if guidedReferenceID != reference.id { stabilizer = GuidanceStabilizer(); guidedReferenceID = reference.id }
         guard let frame = backend.latestPreviewImage() else { return }
-        let finder = finder
-        let live = await Task.detached(priority: .utility) { finder.detect(frame) }.value
+        let finder = finder, sampler = sampler
+        let (live, grid) = await Task.detached(priority: .utility) { () -> (Subject?, LuminanceGrid?) in
+            (finder.detect(frame), sampler.sample(frame)?.luminanceGrid)
+        }.value
+        let liveLight = live.flatMap { subject in grid.flatMap { LightAnalyzer.read($0, subject: subject.box) } }
+        let light = CompositionGuide.LightContext(live: liveLight, example: reference.light, isDim: await backend.isLowLight())
 
         // Compare inside the 4:5 output frame, where the example is fitted exactly as the outline is drawn.
         let c = CropGeometry.normalizedCrop(aspectWidth: 3, aspectHeight: 4)
         let liveInFrame = live?.cropped(to: CGRect(x: c.x, y: c.y, width: c.w, height: c.h))
         let exampleInFrame = example.placed(in: exampleRegion(exampleAspect: CGFloat(aspect)))
-        let raw = CompositionGuide.instruction(live: liveInFrame, example: exampleInFrame)
+        let raw = CompositionGuide.instruction(live: liveInFrame, example: exampleInFrame, light: light)
         let now = ProcessInfo.processInfo.systemUptime
         #if DEBUG
         debugLiveSubject = liveInFrame
@@ -122,7 +126,8 @@ final class CameraModel {
                 guard let s else { return "none" }
                 return "\(s.kind.rawValue) cx \(String(format: "%.2f", s.box.midX)) cy \(String(format: "%.2f", s.box.midY)) h \(String(format: "%.2f", s.box.height)) joints \(s.pose?.joints.count ?? 0)"
             }
-            Diagnostics.log("guide: frame \(Int(frame.extent.width))x\(Int(frame.extent.height)) live [\(box(liveInFrame))] example [\(box(exampleInFrame))] raw \(raw?.kind ?? "nil")")
+            let lightText = liveLight.map { String(format: "s/bg %.2f side %.2f", $0.subjectToBackground, $0.sideBalance) } ?? "-"
+            Diagnostics.log("guide: live [\(box(liveInFrame))] example [\(box(exampleInFrame))] light [\(lightText) dim \(light.isDim)] raw \(raw?.kind ?? "nil")")
         }
         #endif
         let shown = stabilizer.update(candidate: raw, at: now)
@@ -153,12 +158,16 @@ final class CameraModel {
         }
         guard let frame = backend.latestPreviewImage() else { return }
         let sampler = sampler, profile = reference.profile
-        guard let result = await Task.detached(priority: .utility, operation: {
-            sampler.sample(frame).map { LookMatcher.match(scene: $0, to: profile) }
+        guard let (result, highlights) = await Task.detached(priority: .utility, operation: { () -> (LookMatcher.Result, Double)? in
+            guard let sample = sampler.sample(frame) else { return nil }
+            return (LookMatcher.match(scene: sample, to: profile), ColorStats(colors: sample.colors).highL)
         }).value else { return }
 
         // The camera takes over the brightness difference step by step; the look covers what is left.
-        let bias = min(1.5, max(-1.5, exposureBias + 0.5 * result.exposureStops))
+        // Bright parts are protected first (spec 02 FR-002): no brighter once they are near white.
+        var step = 0.5 * result.exposureStops
+        if step > 0, highlights > 94 { step = 0 }
+        let bias = min(1.0, max(-1.5, exposureBias + step))
         if abs(bias - exposureBias) > 0.05 {
             exposureBias = bias
             await backend.setExposureBias(bias)

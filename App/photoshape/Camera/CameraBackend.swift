@@ -14,6 +14,8 @@ protocol CameraBackend: AnyObject, Sendable {
     func select(_ lens: LensOption) async
     /// Brightness target relative to auto exposure, in stops; clamped to what the device allows (spec 02 FR-004).
     func setExposureBias(_ stops: Double) async
+    /// Whether the camera is working at very high sensitivity, i.e. the scene is dim (spec 04 FR-L2).
+    func isLowLight() async -> Bool
     /// Point of interest in device coordinates (0–1, as `AVCaptureDevice` expects).
     func focus(atDevicePoint point: CGPoint) async
     /// Original photo file data (HEIC, with depth when available). Never contains location.

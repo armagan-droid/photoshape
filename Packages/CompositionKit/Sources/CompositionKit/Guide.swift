@@ -15,12 +15,15 @@ public enum CompositionGuide {
         public init() {}
     }
 
-    public static func instruction(live: Subject?, example: Subject, thresholds t: Thresholds = .init()) -> GuidanceInstruction? {
+    public static func instruction(live: Subject?, example: Subject, light: LightContext? = nil,
+                                   thresholds t: Thresholds = .init()) -> GuidanceInstruction? {
         guard let live, live.kind == example.kind || example.kind == .object else {
             return example.kind == .person
                 ? GuidanceInstruction(kind: "frame.personIn", priority: 0, phraseKey: "guide.personIn")
                 : GuidanceInstruction(kind: "frame.subjectIn", priority: 0, phraseKey: "guide.subjectIn")
         }
+
+        if let problem = lightProblem(light) { return problem }
 
         let ratio = live.box.height / max(example.box.height, 0.01)
         if ratio < t.size.lowerBound { return GuidanceInstruction(kind: "frame.closer", direction: .closer, priority: 1, phraseKey: "guide.closer") }
@@ -40,7 +43,7 @@ public enum CompositionGuide {
         if example.kind == .person, let a = live.pose, let b = example.pose, let pose = poseInstruction(live: a, example: b, threshold: t.armAngle) {
             return pose
         }
-        return nil
+        return lightDirection(light)
     }
 
     // MARK: - Pose

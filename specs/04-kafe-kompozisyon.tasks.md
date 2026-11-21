@@ -10,16 +10,18 @@
 - [x] T7 UI testi: örnek seçiliyken taslak görünür
 
 ## Sonraki
-- [ ] Parlaklık hedefi neredeyse sürekli +1,5 EV sınırında (cihaz çıktısı): parlak alan koruması ve daha dar sınır (spec 02 FR-002)
 - [x] Geliştirici derlemesinde canlı konu mavi iskelet/kutu ile çizilir ve her saniye teşhis satırı yazılır
 - [ ] Baş eğimi, gövde ve bacaklar için poz ipuçları
-- [ ] Işık tavsiyesi: ters ışık / loş (spec 02 sinyali) ve örneğin ışık yönü
+- [x] Işık tavsiyesi (FR-L1…L4): ters ışık, loş (kameranın hassasiyetinden), örneğe göre ışık yönü; tek kanal sırası; testler
+- [x] Parlaklık koruması: parlak uçlar beyaza yakınsa kamera daha fazla açılmaz; üst sınır +1,0 EV
 - [ ] Telefon eğimi (tepeden çekim) — CoreMotion
 - [ ] Test setine kişili kareler (spec 00) ve SC-K4 kullanıcı denemesi
 
 ## Elle (iPhone 17)
+- [ ] Işık: pencere önünde (ters ışık) "Işığı yanına al"; yan ışıklı örnekte "Işık soldan/sağdan gelsin"; loş odada "Daha aydınlık yere geç"
 - [x] Kişili bir örnekle (2026-11-21, kısa kabloyla): örnekte kişi ve 17 eklem bulundu; canlıda kişi 144 ölçümün 39'unda (17–19 eklem). Üretilen talimatlar sayılarla tutarlı: boy %65 → yaklaş, %108 → geri çekil, merkez 0,36 → sola çevir, ardından kol talimatları. Sol/sağın kişinin kendi tarafı olduğu henüz gözle doğrulanmadı.
-- [ ] Sol/sağ kol talimatlarının doğru tarafı gösterdiği (kişinin kendi sol/sağı)
+- [x] Sol/sağ kol talimatlarının doğru tarafı gösterdiği (aynayla denendi: kişinin kendi kolu gösterildi)
+- [x] Mavi canlı iskelet kişiye oturuyor; görüntü aşırı parlak değil (+1,5 EV sınırına rağmen)
 - [ ] Hazır halkasının çıktığı tam eşleşme
 - [ ] Yemek/fincan örneğiyle: kenar taslağı ve kadraj ipuçları
 - [ ] Yönlendirme açıkken akıcılık (SC-K3)

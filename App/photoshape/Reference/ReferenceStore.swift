@@ -16,6 +16,8 @@ final class ReferenceStore {
         var subject: Subject?
         /// Width / height of the example, to fit it into the 4:5 frame.
         var aspect: Double?
+        /// How the example's subject is lit (spec 04 FR-L1).
+        var light: LightReading?
     }
 
     private(set) var references: [Reference] = []
@@ -94,12 +96,15 @@ final class ReferenceStore {
             guard let upright = Self.upright(imageData, maxSide: 1024), let sample = SceneSample(image: upright),
                   let thumb = Self.upright(imageData, maxSide: 300).flatMap({ UIImage(cgImage: $0).jpegData(compressionQuality: 0.85) })
             else { return nil }
-            return Analysis(profile: ReferenceProfile(sample: sample), subject: SubjectDetector.detect(in: upright),
+            let subject = SubjectDetector.detect(in: upright)
+            return Analysis(profile: ReferenceProfile(sample: sample), subject: subject,
+                            light: subject.flatMap { LightAnalyzer.read(sample.luminanceGrid, subject: $0.box) },
                             aspect: Double(upright.width) / Double(max(upright.height, 1)),
                             thumbnail: thumb, ghost: Self.outline(of: upright))
         }.value
         guard let result else { failedToRead = true; return }
-        let reference = Reference(id: UUID(), created: Date(), profile: result.profile, subject: result.subject, aspect: result.aspect)
+        let reference = Reference(id: UUID(), created: Date(), profile: result.profile, subject: result.subject,
+                                  aspect: result.aspect, light: result.light)
         try? result.thumbnail.write(to: thumbnailURL(reference.id))
         try? result.ghost?.write(to: ghostURL(reference.id))
         let profile = result.profile
@@ -118,6 +123,7 @@ final class ReferenceStore {
     private struct Analysis: Sendable {
         let profile: ReferenceProfile
         let subject: Subject?
+        let light: LightReading?
         let aspect: Double
         let thumbnail: Data
         let ghost: Data?
@@ -152,5 +158,13 @@ final class ReferenceStore {
             kCGImageSourceThumbnailMaxPixelSize: maxSide,
         ]
         return CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
+    }
+}
+
+extension SceneSample {
+    /// The same sample as a brightness grid for light analysis.
+    var luminanceGrid: LuminanceGrid {
+        LuminanceGrid(width: SceneSample.gridWidth, height: SceneSample.gridHeight,
+                      values: colors.map { 0.2126 * $0.x + 0.7152 * $0.y + 0.0722 * $0.z })
     }
 }
