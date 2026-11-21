@@ -14,9 +14,6 @@ struct CameraPreview: UIViewRepresentable {
         view.backgroundColor = .black
         view.previewLayer.videoGravity = .resizeAspectFill
         view.previewLayer.session = session
-        if let connection = view.previewLayer.connection, connection.isVideoRotationAngleSupported(90) {
-            connection.videoRotationAngle = 90
-        }
         if let stillImage {
             view.layer.contents = stillImage
             view.layer.contentsGravity = .resizeAspectFill
@@ -38,10 +35,12 @@ struct CameraPreview: UIViewRepresentable {
 
         @MainActor @objc func tapped(_ recognizer: UITapGestureRecognizer) {
             guard let view = recognizer.view as? PreviewView else { return }
+            view.uprightConnection()
             let point = recognizer.location(in: view)
             let device = view.previewLayer.session != nil
                 ? view.previewLayer.captureDevicePointConverted(fromLayerPoint: point)
                 : CGPoint(x: point.x / max(view.bounds.width, 1), y: point.y / max(view.bounds.height, 1))
+            Diagnostics.log("tap at view \(point) → device \(device), preview rotation \(view.previewLayer.connection?.videoRotationAngle ?? -1)")
             onTap(point, device)
         }
     }
@@ -49,5 +48,19 @@ struct CameraPreview: UIViewRepresentable {
     final class PreviewView: UIView {
         override class var layerClass: AnyClass { AVCaptureVideoPreviewLayer.self }
         var previewLayer: AVCaptureVideoPreviewLayer { layer as! AVCaptureVideoPreviewLayer }
+
+        /// The preview connection only exists once the session is configured, which can be after this view
+        /// is created. Keep it upright (portrait) so taps map to the right device point.
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            uprightConnection()
+        }
+
+        func uprightConnection() {
+            if let connection = previewLayer.connection, connection.videoRotationAngle != 90,
+               connection.isVideoRotationAngleSupported(90) {
+                connection.videoRotationAngle = 90
+            }
+        }
     }
 }

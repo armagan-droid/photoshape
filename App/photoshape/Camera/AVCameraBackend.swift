@@ -17,6 +17,9 @@ final class AVCameraBackend: NSObject, CameraBackend, @unchecked Sendable {
     private var isConfigured = false
     private var inFlight: [Int64: PhotoCaptureDelegate] = [:]
     private var observers: [NSObjectProtocol] = []
+    /// Subject-area changes right after a tap come from the hand that tapped; ignore them for a moment.
+    private var lastTapUptime: TimeInterval = 0
+    private static let tapGracePeriod: TimeInterval = 2
 
     /// Photos stay near 12 MP: enough for Instagram, quick to capture and save (SC-002).
     private static let maxPhotoPixels = 12_600_000
@@ -58,15 +61,18 @@ final class AVCameraBackend: NSObject, CameraBackend, @unchecked Sendable {
 
     func focus(atDevicePoint point: CGPoint) async {
         await onQueue {
+            self.lastTapUptime = ProcessInfo.processInfo.systemUptime
             self.withLockedDevice { device in
-                if device.isFocusPointOfInterestSupported, device.isFocusModeSupported(.autoFocus) {
+                // Continuous modes keep focus and brightness on the tapped point while it stays in view.
+                if device.isFocusPointOfInterestSupported, device.isFocusModeSupported(.continuousAutoFocus) {
                     device.focusPointOfInterest = point
-                    device.focusMode = .autoFocus
+                    device.focusMode = .continuousAutoFocus
                 }
-                if device.isExposurePointOfInterestSupported, device.isExposureModeSupported(.autoExpose) {
+                if device.isExposurePointOfInterestSupported, device.isExposureModeSupported(.continuousAutoExposure) {
                     device.exposurePointOfInterest = point
-                    device.exposureMode = .autoExpose
+                    device.exposureMode = .continuousAutoExposure
                 }
+                Diagnostics.log("focus at device point \(point) on \(device.localizedName)")
                 // A clear scene change returns to continuous auto (spec 01 Hikâye 3.2).
                 device.isSubjectAreaChangeMonitoringEnabled = true
             }
@@ -164,7 +170,15 @@ final class AVCameraBackend: NSObject, CameraBackend, @unchecked Sendable {
         let center = NotificationCenter.default
         observers.append(center.addObserver(forName: AVCaptureDevice.subjectAreaDidChangeNotification, object: device, queue: nil) { [weak self] _ in
             guard let self else { return }
-            self.queue.async { self.withLockedDevice(self.resetFocus) }
+            self.queue.async {
+                let sinceTap = ProcessInfo.processInfo.systemUptime - self.lastTapUptime
+                guard sinceTap > Self.tapGracePeriod else {
+                    Diagnostics.log("subject area changed \(String(format: "%.1f", sinceTap)) s after tap: ignored")
+                    return
+                }
+                Diagnostics.log("subject area changed: back to continuous auto")
+                self.withLockedDevice(self.resetFocus)
+            }
         })
         // Media services reset: restart; other interruptions (calls, Control Center) resume on their own.
         observers.append(center.addObserver(forName: AVCaptureSession.runtimeErrorNotification, object: session, queue: nil) { [weak self] note in

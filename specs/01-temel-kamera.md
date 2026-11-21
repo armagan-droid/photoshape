@@ -40,6 +40,7 @@ Kullanıcı "geniş / normal / yakın" düğmelerinden birine dokunur.
 **Kabul senaryoları**
 1. **Verilen:** son çekilen fotoğrafın küçük önizlemesi. **Olduğunda:** kullanıcı önizlemeye dokunur. **O zaman:** fotoğraf büyük gösterilir ve bir "Paylaş" düğmesi sunulur.
 2. **Olduğunda:** "Paylaş"a dokunulur. **O zaman:** iOS'un standart paylaşım menüsü açılır ve 4:5 düzenlenmiş fotoğraf paylaşılır. Instagram yüklüyse menüde görünür. Instagram'a özel akış bu spec'te değil, spec 07'dedir.
+3. **Verilen:** fotoğraf düzenleme kaydıyla kaydedilmiş ve kullanıcı büyük önizlemeyi henüz 3 kez görmemiş. **Olduğunda:** büyük önizleme açılır. **O zaman:** fotoğrafın altında, tam karenin de saklandığını ve Fotoğraflar'da nasıl geri alınacağını anlatan tek satırlık bir not görünür. Not, Fotoğraflar'ın kendi menü adlarını kullanır ("⋯ > Özgüne Dön" / "⋯ > Revert to Original"). Kaydetme başarısız olduysa not gösterilmez.
 
 ### Hikâye 5 — İzinler (P1)
 
@@ -70,6 +71,7 @@ Kullanıcı "geniş / normal / yakın" düğmelerinden birine dokunur.
 - **FR-008:** Arayüzde hiçbir sayı, birim ya da teknik terim yoktur (Constitution II).
 - **FR-009:** Tüm metinler Türkçe ve İngilizcedir. Dil, cihaz diline göre seçilir.
 - **FR-010:** Kamera bağlantısı, Constitution'daki ortak katman sınırına uygun bir "kare kaynağı" arayüzü üzerinden diğer katmanlara kare verir. Beyin katmanı kameraya doğrudan bağlanmaz.
+- **FR-012:** Uygulama içinde geri alma ya da galeri yoktur (karar 4; tam kütüphane izni gerektirir, Constitution I). Geri almanın Fotoğraflar'da yapılabildiği kullanıcıya Hikâye 4.3'teki notla anlatılır. Fotoğraflar'ı belirli bir fotoğrafta açan herkese açık bir iOS yöntemi olmadığı için yönlendirme metinle yapılır.
 - **FR-011:** Ses: Deklanşör sesi iOS'un yerel kurallarına uyar. Bazı bölgelerde ses zorunludur; uygulama bunu atlatmaya çalışmaz.
 
 ## Temel varlıklar
@@ -103,3 +105,4 @@ Kullanıcı "geniş / normal / yakın" düğmelerinden birine dokunur.
 3. **Albüm:** Ayrı albüm yoktur. Albüm oluşturmak okuma-yazma izni gerektirir ve Constitution I'deki "en dar izin" kuralıyla çelişir. Yalnızca ekleme izni kullanılır.
 4. **Uygulama içi galeri:** Yoktur. Yalnızca son çekilen fotoğrafın önizlemesi vardır; Fotoğraflar uygulaması yeterlidir.
 5. **Konum:** Eklenmez ve bunu açan bir ayar yoktur (Constitution 1.1.1).
+6. **Geri almanın anlatılması (2026-11-21, cihaz testinden sonra):** Büyük önizlemede, ilk 3 gösterimde tek satırlık not (Hikâye 4.3, FR-012). Menü adları iOS 27.2 Fotoğraflar'dan alındı: TR "Daha Fazla (⋯) > Özgüne Dön", EN "More (⋯) > Revert to Original". iOS sürümleri bu adları değiştirebilir; her büyük iOS sürümünde kontrol edilir.

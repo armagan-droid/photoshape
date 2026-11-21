@@ -4,6 +4,7 @@ import SwiftUI
 struct ReviewView: View {
     let capture: CameraModel.LastCapture
     @Environment(\.dismiss) private var dismiss
+    @State private var hint = RevertHint()
 
     var body: some View {
         NavigationStack {
@@ -14,6 +15,15 @@ struct ReviewView: View {
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .accessibilityIdentifier("reviewImage")
+                }
+                if hint.isVisible {
+                    Text("review.revertHint")
+                        .font(.footnote)
+                        .foregroundStyle(.white.opacity(0.7))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                        .padding(.top, 12)
+                        .accessibilityIdentifier("revertHint")
                 }
                 Spacer(minLength: 0)
                 ShareLink(item: capture.shareURL,
@@ -37,6 +47,26 @@ struct ReviewView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .onAppear { hint.evaluate(revertible: capture.revertible) }
+        .onChange(of: capture.revertible) { _, revertible in hint.evaluate(revertible: revertible) }
+    }
+}
+
+/// Tells the user, on their first few photos, that the full frame is kept and can be restored in Photos
+/// (spec 01 Hikâye 4.3, FR-012). Decided once per review; only for photos that really are revertible.
+struct RevertHint {
+    static let key = "revertHintShownCount"
+    static let limit = 3
+    private var decided = false
+    private(set) var isVisible = false
+
+    mutating func evaluate(revertible: Bool, defaults: UserDefaults = .standard) {
+        guard !decided, revertible else { return }
+        decided = true
+        let shown = defaults.integer(forKey: Self.key)
+        guard shown < Self.limit else { return }
+        defaults.set(shown + 1, forKey: Self.key)
+        isVisible = true
     }
 }
 

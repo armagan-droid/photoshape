@@ -78,6 +78,24 @@ final class CaptureFlowUITests: XCTestCase {
         XCTAssertTrue(app.images["reviewImage"].waitForExistence(timeout: 5))
     }
 
+    func testRevertHintOnEarlyPhotosOnly() {
+        // First reviews: the note appears once the photo is saved with its edit.
+        var app = launch("tr", arguments: ["-revertHintShownCount", "0"])
+        takePhoto(app)
+        app.buttons["lastPhoto"].tap()
+        let hint = app.staticTexts["revertHint"]
+        XCTAssertTrue(hint.waitForExistence(timeout: 8))
+        XCTAssertTrue(hint.label.contains("Özgüne Dön"))
+        app.terminate()
+
+        // After three reviews it no longer appears.
+        app = launch("en", arguments: ["-revertHintShownCount", "3"])
+        takePhoto(app)
+        app.buttons["lastPhoto"].tap()
+        XCTAssertTrue(app.buttons["share"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["revertHint"].waitForExistence(timeout: 4))
+    }
+
     func testDeniedCameraShowsExplanationAndSettingsButton() {
         let app = launch("tr", arguments: ["-SimulateCameraDenied", "YES"])
         XCTAssertTrue(app.otherElements["cameraDenied"].waitForExistence(timeout: 10)

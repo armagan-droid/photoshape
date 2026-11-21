@@ -21,10 +21,24 @@
 - [x] T16 UI testi: çek → önizleme → paylaşım menüsü; izin reddi ekranı
 - [x] T17 Simülatörde kayıtta düzenleme verisinin bulunduğunu doğrulama
 
+- [x] T18 Büyük önizlemede ilk 3 gösterimde geri alma notu, yalnızca düzenleme kaydıyla kaydedildiyse (Hikâye 4.3, FR-012)
+
 ## Notlar
-- `scripts/test.sh`: paket testleri (62). `scripts/test-app.sh`: simülatörde UI testleri (4).
+- `scripts/test.sh`: paket testleri (62). `scripts/test-app.sh`: simülatörde UI testleri (5).
 - T17: Simülatörde kaydedilen fotoğrafın Fotoğraflar kütüphanesinde orijinal HEIC + 4:5 düzenleme (1512×1890) + `Adjustments.plist` (`app.photoshape.ios`, sürüm 1) olarak durduğu doğrulandı.
 - Simülatör HEIC kodlayamıyor; düzenleme orada JPEG'e düşer. Cihazda HEIC beklenir (elle testte kontrol et).
 
-## Elle (iPhone 12)
-- [ ] Spec 01 "Elle test listesi" ve SC-001…SC-006
+## Elle (gerçek cihaz)
+
+İlk deneme (2026-11-21, iPhone 17, iOS 27.2.1, telefon dili İngilizce):
+- [x] Uygulama hızlı açılıyor (SC-001, göz kararı)
+- [x] Üç lens düğmesi görünüyor (Wide / Normal / Close; ultra geniş + geniş, "yakın" 2× dijital)
+- [x] Paylaşım menüsü açılıyor
+- [x] Lens geçişinde görüntü donmuyor ya da kararmıyor (SC-003)
+- [x] Fotoğraflar'da 4:5 ve dik; ⋯ > "Revert to Original" ile kırpılmamış orijinal geri geliyor (FR-004). Kayıt: HEIC düzenleme ekli (teşhis çıktısı).
+- [x] Dokunarak netleme (ilk sürümde dokunuştan hemen sonra merkeze dönüyordu; 2 sn bekleme ve sürekli netleme ile düzeltildi)
+- [ ] İzin akışları (kamera reddi, galeri reddi), iki dilde
+- [ ] Kesintiler (Kontrol Merkezi, uygulamadan çıkıp dönme, arama)
+- [ ] Instagram ve WhatsApp'a gönderme
+- [ ] Çekimden galeriye ≤ 2 sn (SC-002); 100 çekimde çökme yok (SC-004)
+- [ ] En düşük desteklenen cihazda (iPhone 12, iOS 18) tekrar

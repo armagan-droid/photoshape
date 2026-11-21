@@ -13,6 +13,8 @@ final class CameraModel {
         let thumbnail: UIImage
         /// 4:5 JPEG in the temporary directory; kept for the session so it can be shared even if saving failed.
         let shareURL: URL
+        /// Saved with the 4:5 edit attached, so Photos can revert to the full frame (Hikâye 4.3).
+        var revertible = false
     }
 
     struct Notice: Identifiable, Equatable {
@@ -89,16 +91,19 @@ final class CameraModel {
                 let url = FileManager.default.temporaryDirectory
                     .appendingPathComponent("photoshape-\(UUID().uuidString).jpg")
                 try processed.shareJPEG.write(to: url)
-                lastCapture = LastCapture(thumbnail: UIImage(cgImage: processed.thumbnail), shareURL: url)
+                let capture = LastCapture(thumbnail: UIImage(cgImage: processed.thumbnail), shareURL: url)
+                lastCapture = capture
 
                 switch await PhotoLibrarySaver.save(processed, formatIdentifier: AppInfo.bundleIdentifier) {
-                case .saved: break
+                case .saved(let revertible):
+                    if revertible, lastCapture?.id == capture.id { lastCapture?.revertible = true }
                 case .denied: show(.saveDenied)
                 case .failed: show(.saveFailed)
                 }
             } catch {
                 // Capture failures are not shown as errors (Constitution II); the shutter simply becomes ready again.
                 Self.log.error("capture failed: \(String(describing: error), privacy: .public)")
+                Diagnostics.log("capture failed: \(error)")
             }
         }
     }

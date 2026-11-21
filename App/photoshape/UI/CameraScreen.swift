@@ -23,7 +23,8 @@ struct CameraScreen: View {
             }
         }
         .sheet(item: $model.reviewing) { capture in
-            ReviewView(capture: capture)
+            // Reads the model so the revert note can appear once saving finishes.
+            ReviewView(capture: model.lastCapture?.id == capture.id ? model.lastCapture ?? capture : capture)
         }
     }
 

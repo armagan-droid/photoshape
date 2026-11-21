@@ -1,57 +1,75 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "CFBundleDisplayName": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "photoshape"
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "photoshape"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "photoshape"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "photoshape"
           }
         }
       }
     },
-    "NSCameraUsageDescription": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Uses the camera to take photos."
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "photoshape"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fotoğraf çekmek için kamerayı kullanır."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "photoshape"
           }
         }
       }
     },
-    "NSPhotoLibraryAddUsageDescription": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Saves the photos you take to your library."
+    "NSCameraUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uses the camera to take photos."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Çektiğin fotoğrafları galerine kaydeder."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fotoğraf çekmek için kamerayı kullanır."
+          }
+        }
+      }
+    },
+    "NSPhotoLibraryAddUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saves the photos you take to your library."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Çektiğin fotoğrafları galerine kaydeder."
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }

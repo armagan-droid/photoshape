@@ -154,6 +154,23 @@
         }
       }
     },
+    "review.revertHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The full frame is kept too. To get it back, open it in Photos and tap ⋯ > Revert to Original."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tam kare de saklandı. Geri almak için Fotoğraflar'da aç, ⋯ > Özgüne Dön'e dokun."
+          }
+        }
+      }
+    },
     "save.denied": {
       "extractionState": "manual",
       "localizations": {
