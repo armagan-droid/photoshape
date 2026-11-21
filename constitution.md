@@ -20,7 +20,7 @@ Fotoğraftan anlamayan, Instagram için güzel fotoğraf çekmek isteyen insanla
   - (a) StoreKit üzerinden Apple ile yapılan satın alma işlemleri,
   - (b) statik görünüm paketlerinin indirilmesi. Bu istekte kullanıcıya ait hiçbir bilgi gönderilmez; içerik herkes için aynıdır. Barındırma yöntemi plan aşamasında seçilir.
 - Fotoğraf kütüphanesine erişim mümkün olan en dar izinle yapılır: kaydetmek için yalnızca ekleme izni, referans seçmek için sistem seçicisi (tam kütüphane izni istenmez).
-- Kaydedilen fotoğraflara konum bilgisi eklenmez. [Açık soru: bkz. spec 01.]
+- Kaydedilen fotoğraflara konum bilgisi eklenmez. Bunu açan bir ayar yoktur.
 
 **Gerekçe:** Pazarlama vaadi ("abonelik zorunlu değil, fotoğrafların telefonundan çıkmıyor") ve sunucu maliyetinin sıfır olması, ömür boyu lisansı sürdürülebilir kılar.
 
@@ -139,12 +139,13 @@ Geliştirici, aynı anda GymSpot (Muay Thai için kamerayla eskiv ve form koçlu
 - **1.1.0 (2026-11-20):**
   - II: Arayüz öğeleri "çekim kontrolleri (kapalı liste)" ve "eylem ve gezinme öğeleri" olarak ikiye ayrıldı; ayrım ölçütü yazıldı. Teknik sayı yasağına fiyat/tarih istisnası eklendi.
   - III: Şablonlu ve şablonsuz tarif için kompozisyon aktarım kuralı netleştirildi; ışık tavsiyesinin kompozisyondan bağımsız olduğu yazıldı.
+- **1.1.1 (2026-11-21):**
+  - I: Konum açık sorusu kapatıldı. Konum eklenmez ve "konumu ekle" ayarı sunulmaz. Kural değişmedi, yalnızca kesinleşti.
 
-**Version**: 1.1.0 | **Ratified**: 2026-11-19 | **Last Amended**: 2026-11-20
+**Version**: 1.1.1 | **Ratified**: 2026-11-19 | **Last Amended**: 2026-11-21
 
 ## Açık sorular
 
-1. Konum bilgisi: Varsayılan, kaydedilen fotoğrafa konum eklememek. Kullanıcıya "konumu ekle" seçeneği sunulmalı mı? Sunulursa kaydedilen dosyayı değiştiren kalıcı bir ayar olur, yani çekim kontrolleri grubuna girer (II) ve constitution değişikliği gerektirir.
-2. "Görünüm gücü" kaydırıcısının seçimi görünüm başına mı hatırlanmalı, yoksa genel bir değer mi olmalı?
-3. Statik paket indirmede bile bir IP adresi kaçınılmaz olarak sunucuya ulaşır. Gizlilik metninde bu nasıl ifade edilecek? (Apple'ın barındırması seçilirse soru büyük ölçüde ortadan kalkar.)
-4. Uygulama boyutu için bir üst sınır koymak istiyor musun? Türkiye'de hücresel indirmede boyut önemli olabilir. Öneri: ilk sürüm 50 MB altında.
+1. "Görünüm gücü" kaydırıcısının seçimi görünüm başına mı hatırlanmalı, yoksa genel bir değer mi olmalı?
+2. Statik paket indirmede bile bir IP adresi kaçınılmaz olarak sunucuya ulaşır. Gizlilik metninde bu nasıl ifade edilecek? (Apple'ın barındırması seçilirse soru büyük ölçüde ortadan kalkar.)
+3. Uygulama boyutu için bir üst sınır koymak istiyor musun? Türkiye'de hücresel indirmede boyut önemli olabilir. Öneri: ilk sürüm 50 MB altında.

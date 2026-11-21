@@ -55,7 +55,7 @@ Kullanıcı "geniş / normal / yakın" düğmelerinden birine dokunur.
 - **Isınma:** Cihaz ısındığında uygulama çökmez. Önizleme kalitesi düşebilir, ama çekim çalışmaya devam eder.
 - **Depolama dolu:** Kaydetme başarısız olursa kullanıcıya tek cümleyle söylenir. Kare kaybolmaz; paylaşım için tutulur.
 - **Art arda basma:** Deklanşöre hızlıca art arda basılırsa her basış ya bir fotoğraf üretir ya da (çekim devam ediyorsa) yok sayılır. Kuyruk birikip uygulama donmaz.
-- **Yönelim:** Uygulama yalnızca dikey kullanılır. Telefon yan tutulsa bile çıktı 4:5 dikeydir. [NEEDS CLARIFICATION: bkz. açık soru 1]
+- **Yönelim:** Uygulama yalnızca dikey kullanılır. Telefon yan tutulsa bile çıktı 4:5 dikeydir; yan tutuş yok sayılır ve yönlendirme gösterilmez (açık soru 1, karar a).
 - **Derinlik verisi:** Çekimde mümkünse derinlik verisi de alınır (spec 03'teki bulanıklık için). Derinlik alınamayan lens ya da durumda çekim yine çalışır.
 
 ## Fonksiyonel gereksinimler
@@ -96,13 +96,10 @@ Kullanıcı "geniş / normal / yakın" düğmelerinden birine dokunur.
 - [ ] Fotoğraflar'da geri alma
 - [ ] Paylaşım menüsünden Instagram'a ve WhatsApp'a gönderme
 
-## Açık sorular
+## Kararlar (clarify, 2026-11-21)
 
-1. **Yatay çekim:** Telefon yan tutulduğunda ne olmalı? Seçenekler:
-   - (a) yatay tutuşu yok saymak ve dikey 4:5 çekmek (öneri, en basit),
-   - (b) "telefonu dik tut" yönlendirmesi göstermek,
-   - (c) yatay 1,91:1 çekmek (Instagram destekliyor ama kapsamı büyütür).
-2. **"Yakın" kalitesi:** iPhone 12 / 13 / 14 / 15 / 16 standart modellerde telefoto lens yok. "Yakın" ana kameradan kırpma ile yapılırsa çözünürlük düşer. Bu modellerde "yakın" düğmesi gösterilmeli mi?
-3. **Galeri ve albüm:** Fotoğraflar ayrı bir "photoshape" albümüne de eklenmeli mi? Bunun için ek izin gerekebilir.
-4. **Uygulama içi galeri:** MVP'de yalnızca son çekilen fotoğrafın önizlemesi var. Uygulama içinde bir galeri istiyor muyuz? Öneri: hayır, Fotoğraflar uygulaması yeterli.
-5. **Konum:** Constitution açık soru 1 ile aynı.
+1. **Yatay çekim:** (a) Yan tutuş yok sayılır. Arayüz ve çıktı her zaman dikey 4:5'tir, yönlendirme gösterilmez.
+2. **"Yakın" kalitesi:** Düğme her cihazda gösterilir. Telefotosuz cihazlarda ana kameradan 2× yakınlaştırma kullanılır. 12 MP'lik bir sensörde 4:5 çıktı yaklaşık 1512×1890 pikseldir; bu, Instagram'ın 1080×1350 çıktısının üstündedir.
+3. **Albüm:** Ayrı albüm yoktur. Albüm oluşturmak okuma-yazma izni gerektirir ve Constitution I'deki "en dar izin" kuralıyla çelişir. Yalnızca ekleme izni kullanılır.
+4. **Uygulama içi galeri:** Yoktur. Yalnızca son çekilen fotoğrafın önizlemesi vardır; Fotoğraflar uygulaması yeterlidir.
+5. **Konum:** Eklenmez ve bunu açan bir ayar yoktur (Constitution 1.1.1).
