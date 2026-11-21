@@ -3,6 +3,50 @@
 > `/speckit.specify` girdisi. Sürüm: **MVP (v1)**. Bağımlılık: 00, 01, 02 (ışık sinyali), 03 (tarifin kompozisyon şablonu alanı), 05 (örnekten çekim hedefleri).
 >
 > **2026-11-21:** Yönlendirmenin asıl kaynağı seçilen örnektir: örneğin çekim açısı, konunun boyutu ve yeri şablonu belirler (spec 05 FR-009). Sahne türleri uyuşmazsa Constitution III'teki kural geçerlidir: kompozisyon ipuçları kapanır, ışık tavsiyesi sürer.
+>
+> **2026-11-21, kapsam genişledi (README "Öncelik"):** Bu spec artık v1'in merkezi. Kafe/yemek bölümleri "kişisiz konu" durumunu tanımlar. Aşağıdaki **"Kişi ve poz"** ve **"Taslak"** bölümleri eklendi. Örnekte kişi varsa poz yönlendirmesi, yoksa konu kompozisyonu kullanılır; uygulama bunu kendisi anlar.
+
+## Kişi ve poz (2026-11-21)
+
+### Hikâye K1 — Örnekteki gibi kadraj (P1)
+
+**Kabul senaryoları**
+1. **Verilen:** örnekte bir kişi var ve canlı görüntüde de bir kişi var. **O zaman:** kişinin karedeki yeri ve boyu örnekle karşılaştırılır; "biraz yaklaş", "biraz geri çekil", "telefonu sola kaydır" gibi tek bir yönlendirme verilir.
+2. **Verilen:** örnekte kişi var, canlı görüntüde kişi yok. **O zaman:** "kişiyi kareye al" gösterilir.
+
+### Hikâye K2 — Örnekteki gibi poz (P1)
+
+**Kabul senaryoları**
+1. **Verilen:** kadraj yaklaşık uyuyor. **O zaman:** kişinin pozu örnekteki pozla karşılaştırılır ve en farklı uzuv için tek bir cümle verilir: "sol kolunu indir", "sağ kolunu kaldır", "başını biraz eğ" gibi. Sol ve sağ, kişinin kendi sol ve sağıdır (fotoğrafçı kişiye aynen söyleyebilsin).
+2. **Verilen:** poz yeterince benziyor. **O zaman:** yönlendirme kaybolur ve deklanşör çevresinde "hazır" işareti görünür.
+3. Kullanıcı yönlendirmeye uymadan da her an çekebilir.
+
+### Hikâye K3 — Birden fazla kişi (P2)
+
+1. Örnekte ya da canlı görüntüde birden fazla kişi varsa MVP'de en büyük (en öndeki) kişi esas alınır.
+
+## Taslak (2026-11-21, Constitution 1.2.0)
+
+1. Örnek seçiliyken canlı görüntünün üstünde örneğin yarı saydam kenar çizgileri durur. Örnekte kişi varsa iskeleti de çizilir.
+2. Taslak örneğin oranını korur ve 4:5 çerçevenin içine yerleşir.
+3. Çerçeve uyduğunda (hazır) taslak solar.
+
+## Fonksiyonel gereksinimler (kişi ve poz)
+
+- **FR-K1:** Kişi ve iskelet algılama Apple Vision ile cihazda yapılır (Constitution I, V). Örnek için bir kez, canlı görüntü için saniyede birkaç kez.
+- **FR-K2:** Poz karşılaştırması bir beyin modülüdür: girdi iki iskelet (normalize eklem noktaları), çıktı benzerlik ve en önemli tek düzeltme. Kişinin ölçeğinden ve yerinden bağımsızdır. macOS'ta sentetik iskeletlerle test edilir.
+- **FR-K3:** Kadraj karşılaştırması: kişi (ya da kişisiz konu) kutusunun merkezi ve boyu örnekle karşılaştırılır; eşik dışındaysa yönlendirme verilir.
+- **FR-K4:** Yönlendirmelerin görünme kuralları FR-008 ile aynıdır: tek talimat, en az 1 sn, yanıp sönmeme, ısrar etmeme. Talimat yapısı ortak katmandaki `GuidanceInstruction`'dır (docs/ortak-kamera-paketi.md).
+- **FR-K5:** Öncelik sırası: kişiyi kareye almak → mesafe → konum → poz.
+- **FR-K6:** Cümleler iki dilde, en fazla 6 kelime, teknik terim yok (Constitution II, VI).
+
+## Başarı kriterleri (kişi ve poz)
+
+- **SC-K1 (macOS):** Sentetik iskelet çiftlerinde: aynı poz farklı ölçek ve konumda "benzer" bulunur; tek uzvu farklı pozda düzeltme o uzvu gösterir (≥ %95).
+- **SC-K2 (macOS):** Benzetilmiş akışta yönlendirme 1 sn'den kısa sürede değişmez (0 ihlal).
+- **SC-K3 (telefon):** Poz yönlendirmesi açıkken canlı görüntü ≥ 30 kare/sn.
+- **SC-K4 (kullanıcıyla):** 5 kişinin en az 4'ü, bir örnek pozu yönlendirmeyle 1 dakika içinde "hazır" durumuna getirir.
+- **Not:** Bu kriterlerin gerçek fotoğraflarla ölçülmesi için test setine kişili kareler eklenmelidir (spec 00, kategori `portrait` etiketleri). Arka plandaki insanların yüzleri için spec 00 açık soru 2 geçerlidir.
 
 ## Ne ve neden
 

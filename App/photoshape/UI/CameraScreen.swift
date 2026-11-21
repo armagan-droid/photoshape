@@ -75,6 +75,19 @@ struct CameraScreen: View {
         }
         .aspectRatio(3.0 / 4.0, contentMode: .fit)
         .overlay { FrameMask().allowsHitTesting(false) }
+        .overlay {
+            if let ref = model.references.current, ref.subject != nil || model.references.ghost(ref.id) != nil {
+                GhostOverlay(ghost: model.references.ghost(ref.id), subject: ref.subject, aspect: ref.aspect ?? 0.8,
+                             isReady: model.isReady)
+            }
+        }
+        .overlay(alignment: .top) {
+            if let instruction = model.guidance {
+                GuidanceBanner(instruction: instruction).padding(.top, 34)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.25), value: model.guidance)
         .overlay { focusMarker.allowsHitTesting(false) }
         .overlay(alignment: .bottom) {
             LensPicker(options: model.lensOptions, selected: model.selectedLens, select: model.select)
@@ -87,6 +100,7 @@ struct CameraScreen: View {
             withAnimation(.easeOut(duration: 0.25)) { flash = false }
         }
         .sensoryFeedback(.impact(weight: .medium), trigger: model.shutterCount)
+        .sensoryFeedback(.success, trigger: model.readyCount)
     }
 
     @ViewBuilder private var focusMarker: some View {
@@ -126,7 +140,7 @@ struct CameraScreen: View {
             .animation(.spring(duration: 0.3), value: model.lastCapture?.id)
 
             Spacer()
-            ShutterButton(action: model.shutter)
+            ShutterButton(isReady: model.isReady, action: model.shutter)
             Spacer()
             Color.clear.frame(width: 72, height: 72)
         }
@@ -174,12 +188,15 @@ struct FrameMask: View {
 
 struct ShutterButton: View {
     var isLocked = false
+    /// Thin "ready" ring when the shot matches the example (spec 04 Hikâye 5.3).
+    var isReady = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             ZStack {
-                Circle().stroke(.white, lineWidth: 4).frame(width: 76, height: 76)
+                Circle().stroke(isReady ? Color.green : .white, lineWidth: 4).frame(width: 76, height: 76)
+                    .animation(.easeInOut(duration: 0.25), value: isReady)
                 Circle().fill(.white.opacity(isLocked ? 0.5 : 1)).frame(width: 62, height: 62)
                 if isLocked {
                     Image(systemName: "lock.fill").font(.title2).foregroundStyle(.black)
@@ -189,6 +206,7 @@ struct ShutterButton: View {
         .buttonStyle(ShutterPressStyle())
         .accessibilityLabel(Text(isLocked ? "camera.shutterLocked" : "camera.shutter"))
         .accessibilityIdentifier("shutter")
+        .accessibilityValue(Text(isReady ? "camera.ready" : ""))
     }
 }
 

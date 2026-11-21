@@ -38,6 +38,7 @@ Fotoğraftan anlamayan, Instagram için güzel fotoğraf çekmek isteyen insanla
   - **Eylem ve gezinme öğeleri (açık grup):** Çekilmiş bir sonucu kullanan ya da uygulamada dolaşmayı sağlayan öğeler. Örnekler: son çekim önizlemesi, Paylaş, Instagram'a gönder, "diğer kareler"den kare seçimi, "kendi fotoğrafını ekle", görünümü yeniden adlandırma ve silme, ödeme ekranı, satın alımları geri yükleme, izin ve Ayarlar yönlendirmeleri. Bu öğelerin listede olması gerekmez, ama her biri bir spec'te tanımlanmış olmalıdır.
   - Ayrım ölçütü: Öğe, sonraki çekimlerin sonucunu ya da kamera ekranının davranışını değiştiriyorsa çekim kontrolüdür. Var olan bir sonucu kullanıyor ya da yalnızca bir yere götürüyorsa eylem öğesidir.
 - Yönlendirmeler ok ve kısa cümleyle verilir: "biraz geri çekil", "telefonu düz tut", "pencereye yaklaş".
+- Örnek fotoğraf seçiliyse, örneğin yarı saydam **taslağı** canlı görüntünün üstünde gösterilir: kenar çizgileri ve örnekte kişi varsa iskelet çizgisi. Taslak bir kontrol değildir, kullanıcı onu ayarlamaz. Aynı anda yine yalnızca bir cümle ve bir ok görünür.
 - Uygulamanın teknik bir kararı yapamadığı durumlarda (örneğin derinlik verisi yoksa bulanıklığın atlanması) kullanıcıya hata gösterilmez. Uygulama sessizce en iyi alternatifi uygular.
 - Geliştirici ekranları bu ilkeden muaftır, ancak yalnızca geliştirici derlemelerinde bulunur, App Store sürümüne girmez.
 
@@ -141,10 +142,12 @@ Geliştirici, aynı anda GymSpot (Muay Thai için kamerayla eskiv ve form koçlu
   - III: Şablonlu ve şablonsuz tarif için kompozisyon aktarım kuralı netleştirildi; ışık tavsiyesinin kompozisyondan bağımsız olduğu yazıldı.
 - **1.1.1 (2026-11-21):**
   - I: Konum açık sorusu kapatıldı. Konum eklenmez ve "konumu ekle" ayarı sunulmaz. Kural değişmedi, yalnızca kesinleşti.
+- **1.2.0 (2026-11-21):**
+  - II: Yönlendirmeye örneğin yarı saydam taslağı eklendi (spec 04, 2026-11-21 yön değişikliği). Yeni bir kontrol eklenmedi.
 - **1.1.2 (2026-11-21):**
   - II: "Görünüm gücü" kaydırıcısının değeri görünüm başına hatırlanır (spec 03 karar 3). Kontrol listesi değişmedi.
 
-**Version**: 1.1.2 | **Ratified**: 2026-11-19 | **Last Amended**: 2026-11-21
+**Version**: 1.2.0 | **Ratified**: 2026-11-19 | **Last Amended**: 2026-11-21
 
 ## Açık sorular
 

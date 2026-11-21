@@ -10,6 +10,7 @@
 		53F8ADED34EB22AA8750447C /* FrameKit in Frameworks */ = {isa = PBXBuildFile; productRef = F9D009BBAFD11BD07F47D7D5 /* FrameKit */; };
 		EEAEB8E6591DF52A49A36A95 /* CaptureKit in Frameworks */ = {isa = PBXBuildFile; productRef = 29AB05B63C731CE7ED24B3D1 /* CaptureKit */; };
 		522469EEEF4DD683144A9F4A /* LookKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8CB61B6C36F11D75B6B36747 /* LookKit */; };
+		BCEEEF6899C4AC30E1497242 /* CompositionKit in Frameworks */ = {isa = PBXBuildFile; productRef = A7B745198EBA6C1B00425BE1 /* CompositionKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +50,7 @@
 				53F8ADED34EB22AA8750447C /* FrameKit in Frameworks */,
 				EEAEB8E6591DF52A49A36A95 /* CaptureKit in Frameworks */,
 				522469EEEF4DD683144A9F4A /* LookKit in Frameworks */,
+				BCEEEF6899C4AC30E1497242 /* CompositionKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +114,7 @@
 				F9D009BBAFD11BD07F47D7D5 /* FrameKit */,
 				29AB05B63C731CE7ED24B3D1 /* CaptureKit */,
 				8CB61B6C36F11D75B6B36747 /* LookKit */,
+				A7B745198EBA6C1B00425BE1 /* CompositionKit */,
 			);
 			productName = photoshape;
 			productReference = 81918909E83595C8F4212CCC /* photoshape.app */;
@@ -171,6 +174,7 @@
 				83BFFA927D622D19715A3181 /* XCLocalSwiftPackageReference "../Packages/FrameKit" */,
 				44BE0788185BD4D164F51AE2 /* XCLocalSwiftPackageReference "../Packages/CaptureKit" */,
 				81CD0C2A4C1652ADAEB4E735 /* XCLocalSwiftPackageReference "../Packages/LookKit" */,
+				2CF5D1620B076FB3BAF72136 /* XCLocalSwiftPackageReference "../Packages/CompositionKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1BADDC1D73C1A20F347483E1 /* Products */;
@@ -398,6 +402,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../Packages/LookKit;
 		};
+		2CF5D1620B076FB3BAF72136 /* XCLocalSwiftPackageReference "../Packages/CompositionKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Packages/CompositionKit;
+		};
 		83BFFA927D622D19715A3181 /* XCLocalSwiftPackageReference "../Packages/FrameKit" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../Packages/FrameKit;
@@ -412,6 +420,10 @@
 		8CB61B6C36F11D75B6B36747 /* LookKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = LookKit;
+		};
+		A7B745198EBA6C1B00425BE1 /* CompositionKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CompositionKit;
 		};
 		F9D009BBAFD11BD07F47D7D5 /* FrameKit */ = {
 			isa = XCSwiftPackageProductDependency;

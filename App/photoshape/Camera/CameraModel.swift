@@ -1,5 +1,7 @@
 import CaptureKit
+import CompositionKit
 import CoreImage
+import FrameKit
 import LookKit
 import OSLog
 import SwiftUI
@@ -51,6 +53,17 @@ final class CameraModel {
     private var matchTask: Task<Void, Never>?
     private var exposureBias = 0.0
     private var matchedReferenceID: UUID?
+
+    /// The one instruction on screen (spec 04 FR-K4), nil when there is nothing to correct.
+    private(set) var guidance: GuidanceInstruction?
+    /// The shot matches the example's framing and pose (spec 04 Hikâye 5.3, K2.2).
+    private(set) var isReady = false
+    /// Incremented each time the shot becomes ready (light haptic).
+    private(set) var readyCount = 0
+    private var stabilizer = GuidanceStabilizer()
+    private var guideTask: Task<Void, Never>?
+    private var guidedReferenceID: UUID?
+    private let finder = SubjectFinder()
     private var gate = ShutterGate()
     private var isActive = false
 
@@ -68,6 +81,40 @@ final class CameraModel {
         var recipe = LookRecipe.natural
         recipe.adjustments = adjustments
         return recipe
+    }
+
+    // MARK: - Guiding toward the example's framing and pose (spec 04, Kişi ve poz)
+
+    private func startGuiding() {
+        guideTask?.cancel()
+        guideTask = Task { [weak self] in
+            while !Task.isCancelled {
+                await self?.guideOnce()
+                try? await Task.sleep(for: .milliseconds(250))
+            }
+        }
+    }
+
+    private func guideOnce() async {
+        guard let reference = references.current, let example = reference.subject, let aspect = reference.aspect else {
+            guidance = nil; isReady = false; guidedReferenceID = nil
+            return
+        }
+        if guidedReferenceID != reference.id { stabilizer = GuidanceStabilizer(); guidedReferenceID = reference.id }
+        guard let frame = backend.latestPreviewImage() else { return }
+        let finder = finder
+        let live = await Task.detached(priority: .utility) { finder.detect(frame) }.value
+
+        // Compare inside the 4:5 output frame, where the example is fitted exactly as the outline is drawn.
+        let c = CropGeometry.normalizedCrop(aspectWidth: 3, aspectHeight: 4)
+        let liveInFrame = live?.cropped(to: CGRect(x: c.x, y: c.y, width: c.w, height: c.h))
+        let exampleInFrame = example.placed(in: exampleRegion(exampleAspect: CGFloat(aspect)))
+        let raw = CompositionGuide.instruction(live: liveInFrame, example: exampleInFrame)
+        let shown = stabilizer.update(candidate: raw, at: ProcessInfo.processInfo.systemUptime)
+        if shown != guidance { guidance = shown; Diagnostics.log("guidance: \(shown?.kind ?? "ready?")") }
+        let ready = shown == nil && raw == nil && live != nil
+        if ready && !isReady { readyCount += 1 }
+        isReady = ready
     }
 
     // MARK: - Matching the example (spec 05 FR-009/010, spec 02 FR-004)
@@ -115,6 +162,7 @@ final class CameraModel {
         guard access == .authorized else { return }
         lensOptions = await backend.start()
         startMatching()
+        startGuiding()
         if let option = lensOptions.first(where: { $0.kind == selectedLens }) { await backend.select(option) }
     }
 
@@ -122,6 +170,7 @@ final class CameraModel {
         guard isActive else { return }
         isActive = false
         matchTask?.cancel()
+        guideTask?.cancel()
         await backend.stop()
     }
 
@@ -224,5 +273,20 @@ private extension LookAdjustments {
         r.saturation = mix(saturation, t.saturation); r.vibrance = mix(vibrance, t.vibrance)
         r.vignette = mix(vignette, t.vignette); r.grain = mix(grain, t.grain)
         return r
+    }
+}
+
+/// Finds the main subject in a preview frame with Vision, at a small size (spec 04 FR-K1).
+final class SubjectFinder: @unchecked Sendable {
+    private let context = CIContext(options: [.cacheIntermediates: false])
+
+    func detect(_ image: CIImage) -> Subject? {
+        let e = image.extent
+        guard e.width > 0 else { return nil }
+        let scale = 480 / max(e.width, e.height)
+        let small = image.transformed(by: CGAffineTransform(translationX: -e.minX, y: -e.minY)
+            .concatenating(CGAffineTransform(scaleX: scale, y: scale)))
+        guard let cg = context.createCGImage(small, from: small.extent) else { return nil }
+        return SubjectDetector.detect(in: cg)
     }
 }

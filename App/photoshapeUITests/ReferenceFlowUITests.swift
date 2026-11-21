@@ -71,6 +71,7 @@ final class ReferenceFlowUITests: XCTestCase {
     func testCaptureWithAnExample() {
         let app = launch(["-ResetReferences", "YES", "-UITestReference", "02-coffee-break.jpg"])
         XCTAssertTrue(app.buttons["shutter"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.descendants(matching: .any)["ghost"].waitForExistence(timeout: 5), "example outline over the live view")
         sleep(2)
         app.buttons["shutter"].tap()
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")

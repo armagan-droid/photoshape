@@ -13,14 +13,16 @@ Kod adı: **photoshape** (ürün adı sonra belirlenecek). Spec dili Türkçe; k
 ## Yol haritası
 
 > **Yön değişikliği (2026-11-21):** İlk sürüm hazır görünümler (filtre şeridi) etrafında kurulmuştu. Cihazda denendiğinde ortaya bir filtre uygulaması çıktı; ürün vaadi bu değil. Uygulama artık **örnek fotoğrafla başlar**: kullanıcı beğendiği fotoğrafı seçer, uygulama kamera ayarlarını o fotoğrafa göre yapar, açı/mesafe ve ışık için yönlendirir ve renk havasını otomatik eşleştirir. Hazır görünüm şeridi kullanıcıya gösterilmez; renk motoru (spec 03) arka planda kalır.
+>
+> **Öncelik (2026-11-21, ikinci karar):** Bir fotoğrafı "o fotoğraf gibi" yapan şeylerin sırası: kompozisyon, poz, ışık, en son renk. v1'in merkezi bu yüzden **örneğe göre yönlendirmedir** (spec 04): örnekte kişi varsa poz + kompozisyon + ışık, yoksa konu kompozisyonu + ışık. Örneğin yarı saydam taslağı canlı görüntünün üstünde durur (Constitution 1.2.0). Poz yönlendirmesi v4'ten v1'e taşındı; cilt tonu koruma ve ön kamera v4'te kalır.
 
 | Sürüm | İçerik | Kategori |
 |---|---|---|
 | Ön hazırlık | 00 Test seti ve etiketleme | kafe/yemek |
-| **v1 (MVP)**, tamamen ücretsiz | 01 Temel kamera · **05 Örnek fotoğraftan tarif (ana akış)** · 02 Akıllı pozlama ve beyaz dengesi (örneğe göre hedefler dahil) · 04 Açı, mesafe ve ışık yönlendirmesi (örneğe göre) · 03 Tarif formatı ve renk motoru (arka planda) | kafe/yemek |
+| **v1 (MVP)**, tamamen ücretsiz | 01 Temel kamera · **05 Örnek fotoğraf (ana akış)** · **04 Örneğe göre kompozisyon, poz ve ışık yönlendirmesi** · 02 Akıllı pozlama ve beyaz dengesi (örneğe göre hedefler dahil) · 03 Tarif formatı ve renk motoru (arka planda) | kafe/yemek + kişiler |
 | **v2** | 07 Instagram paylaşımı, ödeme | kafe/yemek |
 | **v3** | 06 Seri çekim ve en iyi kare · seyahat/manzara kategorisi | + seyahat |
-| **v4** | Arkadaşlarla portre: cilt tonu koruma, ön kamera, gruplarda göz kırpma | + portre |
+| **v4** | Portre ayrıntıları: cilt tonu koruma, ön kamera, gruplarda göz kırpma | + portre |
 | İleride | Fotoğrafçı imzalı örnek paketleri (gelir paylaşımı) | — |
 
 Seyahat ve portre kategorileri için spec'ler, o sürümlere gelindiğinde 04'ün yapısı örnek alınarak yazılacak.

@@ -1,3 +1,4 @@
+import CompositionKit
 import CoreImage
 import Foundation
 import LookKit
@@ -11,6 +12,10 @@ final class ReferenceStore {
         let id: UUID
         let created: Date
         let profile: ReferenceProfile
+        /// Main subject of the example (person with pose, or object), in the example's own coordinates (spec 04).
+        var subject: Subject?
+        /// Width / height of the example, to fit it into the 4:5 frame.
+        var aspect: Double?
     }
 
     private(set) var references: [Reference] = []
@@ -24,6 +29,7 @@ final class ReferenceStore {
     private let directory: URL
     private let defaults: UserDefaults
     private var thumbnails: [UUID: UIImage] = [:]
+    private var ghosts: [UUID: UIImage] = [:]
     private enum Keys { static let current = "reference.current" }
 
     init(defaults: UserDefaults = .standard) {
@@ -58,6 +64,8 @@ final class ReferenceStore {
         references.removeAll { $0.id == id }
         thumbnails[id] = nil
         try? FileManager.default.removeItem(at: thumbnailURL(id))
+        try? FileManager.default.removeItem(at: ghostURL(id))
+        ghosts[id] = nil
         if currentID == id { shootWithoutExample() }
         saveIndex()
     }
@@ -69,29 +77,67 @@ final class ReferenceStore {
         return image
     }
 
+    /// Outline of the example drawn over the live view (spec 04 "Taslak", Constitution 1.2.0).
+    func ghost(_ id: UUID) -> UIImage? {
+        if let cached = ghosts[id] { return cached }
+        let image = UIImage(contentsOfFile: ghostURL(id).path)
+        ghosts[id] = image
+        return image
+    }
+
     /// Analyzes a picked image off the main thread, stores it and makes it current.
     func add(imageData: Data) async {
         isAnalyzing = true
         failedToRead = false
         defer { isAnalyzing = false }
-        let result = await Task.detached(priority: .userInitiated) { () -> (ReferenceProfile, Data)? in
-            guard let upright = Self.upright(imageData, maxSide: 1024), let sample = SceneSample(image: upright) else { return nil }
-            let thumb = Self.upright(imageData, maxSide: 300).flatMap { UIImage(cgImage: $0).jpegData(compressionQuality: 0.85) }
-            return thumb.map { (ReferenceProfile(sample: sample), $0) }
+        let result = await Task.detached(priority: .userInitiated) { () -> Analysis? in
+            guard let upright = Self.upright(imageData, maxSide: 1024), let sample = SceneSample(image: upright),
+                  let thumb = Self.upright(imageData, maxSide: 300).flatMap({ UIImage(cgImage: $0).jpegData(compressionQuality: 0.85) })
+            else { return nil }
+            return Analysis(profile: ReferenceProfile(sample: sample), subject: SubjectDetector.detect(in: upright),
+                            aspect: Double(upright.width) / Double(max(upright.height, 1)),
+                            thumbnail: thumb, ghost: Self.outline(of: upright))
         }.value
-        guard let (profile, thumb) = result else { failedToRead = true; return }
-        let reference = Reference(id: UUID(), created: Date(), profile: profile)
-        try? thumb.write(to: thumbnailURL(reference.id))
+        guard let result else { failedToRead = true; return }
+        let reference = Reference(id: UUID(), created: Date(), profile: result.profile, subject: result.subject, aspect: result.aspect)
+        try? result.thumbnail.write(to: thumbnailURL(reference.id))
+        try? result.ghost?.write(to: ghostURL(reference.id))
+        let profile = result.profile
         references.insert(reference, at: 0)
         saveIndex()
         select(reference.id)
-        Diagnostics.log("reference added: meanL \(profile.stats.meanL), chroma \(profile.stats.meanChroma)")
+        Diagnostics.log("reference added: meanL \(profile.stats.meanL), chroma \(profile.stats.meanChroma), subject \(result.subject?.kind.rawValue ?? "none")")
     }
 
     // MARK: - Files
 
     private var indexURL: URL { directory.appendingPathComponent("references.json") }
     private func thumbnailURL(_ id: UUID) -> URL { directory.appendingPathComponent("\(id.uuidString).jpg") }
+    private func ghostURL(_ id: UUID) -> URL { directory.appendingPathComponent("\(id.uuidString)-ghost.png") }
+
+    private struct Analysis: Sendable {
+        let profile: ReferenceProfile
+        let subject: Subject?
+        let aspect: Double
+        let thumbnail: Data
+        let ghost: Data?
+    }
+
+    /// White edge lines on transparent, ≤ 720 px: enough to line up with, not a copy of the photo.
+    nonisolated static func outline(of image: CGImage) -> Data? {
+        let input = CIImage(cgImage: image)
+        let scale = min(1, 720 / max(input.extent.width, input.extent.height))
+        let edges = input
+            .transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+            .applyingGaussianBlur(sigma: 1.2)
+            .applyingFilter("CIEdges", parameters: [kCIInputIntensityKey: 4])
+            .applyingFilter("CIColorControls", parameters: [kCIInputSaturationKey: 0, kCIInputContrastKey: 1.6])
+            .applyingFilter("CIMaskToAlpha")
+        let extent = CGRect(x: 0, y: 0, width: (input.extent.width * scale).rounded(), height: (input.extent.height * scale).rounded())
+        let context = CIContext()
+        guard let cg = context.createCGImage(edges.cropped(to: extent), from: extent) else { return nil }
+        return UIImage(cgImage: cg).pngData()
+    }
 
     private func saveIndex() {
         if let data = try? JSONEncoder().encode(references) { try? data.write(to: indexURL, options: .atomic) }
