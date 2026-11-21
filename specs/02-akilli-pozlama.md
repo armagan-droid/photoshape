@@ -1,6 +1,8 @@
 # Spec 02 — Akıllı otomatik pozlama ve beyaz dengesi
 
-> `/speckit.specify` girdisi. Sürüm: **MVP (v1)**. Bağımlılık: 00 (test seti), 01 (temel kamera).
+> `/speckit.specify` girdisi. Sürüm: **MVP (v1)**. Bağımlılık: 00 (test seti), 01 (temel kamera), 05 (örnekten çekim hedefleri).
+>
+> **2026-11-21:** Örnek fotoğraf seçildiğinde karar, örneğin hedef parlaklığına ve sıcaklık eğilimine göre önyargı alır (FR-004, spec 05 FR-009). Açık soru 3 bu yönde kapandı: alan MVP'de kullanılır.
 
 ## Ne ve neden
 

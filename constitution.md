@@ -141,11 +141,12 @@ Geliştirici, aynı anda GymSpot (Muay Thai için kamerayla eskiv ve form koçlu
   - III: Şablonlu ve şablonsuz tarif için kompozisyon aktarım kuralı netleştirildi; ışık tavsiyesinin kompozisyondan bağımsız olduğu yazıldı.
 - **1.1.1 (2026-11-21):**
   - I: Konum açık sorusu kapatıldı. Konum eklenmez ve "konumu ekle" ayarı sunulmaz. Kural değişmedi, yalnızca kesinleşti.
+- **1.1.2 (2026-11-21):**
+  - II: "Görünüm gücü" kaydırıcısının değeri görünüm başına hatırlanır (spec 03 karar 3). Kontrol listesi değişmedi.
 
-**Version**: 1.1.1 | **Ratified**: 2026-11-19 | **Last Amended**: 2026-11-21
+**Version**: 1.1.2 | **Ratified**: 2026-11-19 | **Last Amended**: 2026-11-21
 
 ## Açık sorular
 
-1. "Görünüm gücü" kaydırıcısının seçimi görünüm başına mı hatırlanmalı, yoksa genel bir değer mi olmalı?
-2. Statik paket indirmede bile bir IP adresi kaçınılmaz olarak sunucuya ulaşır. Gizlilik metninde bu nasıl ifade edilecek? (Apple'ın barındırması seçilirse soru büyük ölçüde ortadan kalkar.)
-3. Uygulama boyutu için bir üst sınır koymak istiyor musun? Türkiye'de hücresel indirmede boyut önemli olabilir. Öneri: ilk sürüm 50 MB altında.
+1. Statik paket indirmede bile bir IP adresi kaçınılmaz olarak sunucuya ulaşır. Gizlilik metninde bu nasıl ifade edilecek? (Apple'ın barındırması seçilirse soru büyük ölçüde ortadan kalkar.)
+2. Uygulama boyutu için bir üst sınır koymak istiyor musun? Türkiye'de hücresel indirmede boyut önemli olabilir. Öneri: ilk sürüm 50 MB altında.

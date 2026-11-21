@@ -1,6 +1,8 @@
 # Spec 04 — Kafe/yemek kategorisi için kompozisyon ve ışık yönlendirmesi
 
-> `/speckit.specify` girdisi. Sürüm: **MVP (v1)**. Bağımlılık: 00, 01, 02 (ışık sinyali), 03 (tarifin kompozisyon şablonu alanı).
+> `/speckit.specify` girdisi. Sürüm: **MVP (v1)**. Bağımlılık: 00, 01, 02 (ışık sinyali), 03 (tarifin kompozisyon şablonu alanı), 05 (örnekten çekim hedefleri).
+>
+> **2026-11-21:** Yönlendirmenin asıl kaynağı seçilen örnektir: örneğin çekim açısı, konunun boyutu ve yeri şablonu belirler (spec 05 FR-009). Sahne türleri uyuşmazsa Constitution III'teki kural geçerlidir: kompozisyon ipuçları kapanır, ışık tavsiyesi sürer.
 
 ## Ne ve neden
 

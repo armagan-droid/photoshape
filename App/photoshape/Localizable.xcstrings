@@ -52,6 +52,23 @@
         }
       }
     },
+    "camera.question": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What kind of photo do you want?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nasıl bir fotoğraf istiyorsun?"
+          }
+        }
+      }
+    },
     "camera.shutter": {
       "extractionState": "manual",
       "localizations": {
@@ -65,6 +82,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fotoğraf çek"
+          }
+        }
+      }
+    },
+    "camera.shutterLocked": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Take photo (look locked)"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fotoğraf çek (görünüm kilitli)"
           }
         }
       }
@@ -150,6 +184,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Geniş"
+          }
+        }
+      }
+    },
+    "look.strength": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Look strength"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Görünüm gücü"
           }
         }
       }

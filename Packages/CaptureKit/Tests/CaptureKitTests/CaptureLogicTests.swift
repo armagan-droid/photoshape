@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 import Testing
 @testable import CaptureKit
@@ -93,7 +94,8 @@ struct ShutterGateTests {
 @Suite("Edit record (FR-004, FR-005)")
 struct EditRecordTests {
     @Test func roundTrips() throws {
-        let record = EditRecord(appVersion: "1.0 (1)", crop: NormalizedRect(x: 0, y: 0.03125, w: 1, h: 0.9375))
+        let record = EditRecord(appVersion: "1.0 (1)", crop: NormalizedRect(x: 0, y: 0.03125, w: 1, h: 0.9375),
+                                look: .init(id: "coffee-break", version: 1, strength: 0.7))
         let decoded = try EditRecord.decode(record.encoded(), formatVersion: EditRecord.formatVersion)
         #expect(decoded == record)
     }
@@ -103,11 +105,34 @@ struct EditRecordTests {
         let json = #"{"appVersion":"2.0","crop":{"x":0,"y":0,"w":0.8,"h":1},"look":{"id":"morning","version":3,"strength":0.7}}"#
         let decoded = try EditRecord.decode(Data(json.utf8), formatVersion: "1")
         #expect(decoded.crop.w == 0.8)
+        #expect(decoded.look == .init(id: "morning", version: 3, strength: 0.7))
+        // A spec 01 record without a look still decodes.
+        let old = try EditRecord.decode(Data(#"{"appVersion":"0.1","crop":{"x":0,"y":0,"w":1,"h":1}}"#.utf8), formatVersion: "1")
+        #expect(old.look == nil)
     }
 
     @Test func rejectsUnknownFormatVersion() {
         #expect(throws: EditRecord.Error.self) { try EditRecord.decode(Data("{}".utf8), formatVersion: "99") }
         #expect(EditRecord.canHandle(formatIdentifier: "app.x", formatVersion: "1", appIdentifier: "app.x"))
         #expect(!EditRecord.canHandle(formatIdentifier: "com.other", formatVersion: "1", appIdentifier: "app.x"))
+    }
+}
+
+@Suite("Tap point → camera point of interest")
+struct DevicePointTests {
+    /// Values logged on an iPhone 17 by AVCaptureVideoPreviewLayer (preview 402×536 pt, rotation 90°).
+    @Test(arguments: [
+        (CGPoint(x: 167.67, y: 283.33), CGPoint(x: 0.5286, y: 0.5829)),
+        (CGPoint(x: 158.0, y: 365.0), CGPoint(x: 0.6810, y: 0.6070)),
+        (CGPoint(x: 270.0, y: 345.67), CGPoint(x: 0.6449, y: 0.3284)),
+    ])
+    func matchesThePreviewLayerOnDevice(view: CGPoint, expected: CGPoint) {
+        let p = DevicePoint.fromPortraitPreview(view, viewSize: CGSize(width: 402, height: 536))
+        #expect(abs(p.x - expected.x) < 0.002 && abs(p.y - expected.y) < 0.002)
+    }
+
+    @Test func clampsOutsidePoints() {
+        let p = DevicePoint.fromPortraitPreview(CGPoint(x: -10, y: 900), viewSize: CGSize(width: 300, height: 400))
+        #expect(p == CGPoint(x: 1, y: 1))
     }
 }

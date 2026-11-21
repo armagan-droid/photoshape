@@ -12,14 +12,16 @@ Kod adı: **photoshape** (ürün adı sonra belirlenecek). Spec dili Türkçe; k
 
 ## Yol haritası
 
+> **Yön değişikliği (2026-11-21):** İlk sürüm hazır görünümler (filtre şeridi) etrafında kurulmuştu. Cihazda denendiğinde ortaya bir filtre uygulaması çıktı; ürün vaadi bu değil. Uygulama artık **örnek fotoğrafla başlar**: kullanıcı beğendiği fotoğrafı seçer, uygulama kamera ayarlarını o fotoğrafa göre yapar, açı/mesafe ve ışık için yönlendirir ve renk havasını otomatik eşleştirir. Hazır görünüm şeridi kullanıcıya gösterilmez; renk motoru (spec 03) arka planda kalır.
+
 | Sürüm | İçerik | Kategori |
 |---|---|---|
 | Ön hazırlık | 00 Test seti ve etiketleme | kafe/yemek |
-| **v1 (MVP)**, tamamen ücretsiz | 01 Temel kamera · 02 Akıllı pozlama ve beyaz dengesi · 03 Görünüm tarifi, hazır görünümler, canlı önizleme · 04 Kafe/yemek kompozisyon ve ışık yönlendirmesi | kafe/yemek |
-| **v2** | 05 Referans ekran görüntüsünden tarif · 07 Instagram paylaşımı, ödeme, görünüm paketleri | kafe/yemek |
-| **v3** | 06 Seri çekim ve en iyi kare · seyahat/manzara kategorisi (görünümler + kompozisyon şablonları) | + seyahat |
+| **v1 (MVP)**, tamamen ücretsiz | 01 Temel kamera · **05 Örnek fotoğraftan tarif (ana akış)** · 02 Akıllı pozlama ve beyaz dengesi (örneğe göre hedefler dahil) · 04 Açı, mesafe ve ışık yönlendirmesi (örneğe göre) · 03 Tarif formatı ve renk motoru (arka planda) | kafe/yemek |
+| **v2** | 07 Instagram paylaşımı, ödeme | kafe/yemek |
+| **v3** | 06 Seri çekim ve en iyi kare · seyahat/manzara kategorisi | + seyahat |
 | **v4** | Arkadaşlarla portre: cilt tonu koruma, ön kamera, gruplarda göz kırpma | + portre |
-| İleride | Fotoğrafçı imzalı paketler (gelir paylaşımı) | — |
+| İleride | Fotoğrafçı imzalı örnek paketleri (gelir paylaşımı) | — |
 
 Seyahat ve portre kategorileri için spec'ler, o sürümlere gelindiğinde 04'ün yapısı örnek alınarak yazılacak.
 

@@ -1,10 +1,14 @@
 import CaptureKit
+import LookKit
 import SwiftUI
 
+/// Camera and look choice on one screen (spec 03 FR-006). Layout (plan): question on top, preview pinned to the top
+/// with lens buttons inside it, then look strength, the look strip and the shutter row.
 struct CameraScreen: View {
     @Bindable var model: CameraModel
     @Environment(\.scenePhase) private var scenePhase
     @State private var flash = false
+    @State private var showQuestion = true
 
     var body: some View {
         ZStack {
@@ -29,23 +33,47 @@ struct CameraScreen: View {
     }
 
     private var camera: some View {
-        VStack(spacing: 16) {
-            Spacer(minLength: 0)
+        VStack(spacing: 0) {
+            question
             preview
-            LensPicker(options: model.lensOptions, selected: model.selectedLens, select: model.select)
+            Spacer(minLength: 8)
+            strengthSlider
+            LookStrip(selection: model.looks, isLocked: { !model.entitlements.isAvailable($0) }) {
+                showQuestion = false
+            }
+            .padding(.top, 6)
+            Spacer(minLength: 8)
             controls
-            Spacer(minLength: 0)
+            Spacer(minLength: 8)
         }
         .overlay(alignment: .top) { noticeBanner }
+        .task {
+            try? await Task.sleep(for: .seconds(4))
+            withAnimation(.easeOut(duration: 0.6)) { showQuestion = false }
+        }
+    }
+
+    private var question: some View {
+        Text("camera.question")
+            .font(.headline)
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity, minHeight: 36)
+            .opacity(showQuestion ? 1 : 0)
+            .accessibilityIdentifier("question")
     }
 
     private var preview: some View {
-        CameraPreview(session: model.backend.previewSession, stillImage: model.backend.stillPreview) { view, device in
-            model.tapToFocus(viewPoint: view, devicePoint: device)
+        LookPreview(source: model.backend.latestPreviewImage, look: model.looks.selected,
+                    strength: model.looks.strength, renderer: model.renderer) { point, size in
+            model.tapToFocus(viewPoint: point, viewSize: size)
         }
         .aspectRatio(3.0 / 4.0, contentMode: .fit)
         .overlay { FrameMask().allowsHitTesting(false) }
         .overlay { focusMarker.allowsHitTesting(false) }
+        .overlay(alignment: .bottom) {
+            LensPicker(options: model.lensOptions, selected: model.selectedLens, select: model.select)
+                .padding(.bottom, 10)
+        }
         .overlay { Color.white.opacity(flash ? 0.8 : 0).allowsHitTesting(false) }
         .clipped()
         .onChange(of: model.shutterCount) {
@@ -53,6 +81,19 @@ struct CameraScreen: View {
             withAnimation(.easeOut(duration: 0.25)) { flash = false }
         }
         .sensoryFeedback(.impact(weight: .medium), trigger: model.shutterCount)
+        .sensoryFeedback(.warning, trigger: model.lockedPressCount)
+    }
+
+    /// One unnumbered slider (Constitution II). Hidden for "Doğal", which has no strength.
+    private var strengthSlider: some View {
+        Slider(value: Binding(get: { model.looks.strength }, set: { model.looks.strength = $0 }), in: 0...1)
+            .tint(.white)
+            .padding(.horizontal, 32)
+            .opacity(model.looks.isNatural ? 0 : 1)
+            .disabled(model.looks.isNatural)
+            .accessibilityLabel(Text("look.strength"))
+            .accessibilityIdentifier("strength")
+            .frame(height: 32)
     }
 
     @ViewBuilder private var focusMarker: some View {
@@ -92,7 +133,7 @@ struct CameraScreen: View {
             .animation(.spring(duration: 0.3), value: model.lastCapture?.id)
 
             Spacer()
-            ShutterButton(action: model.shutter)
+            ShutterButton(isLocked: model.isSelectedLookLocked, action: model.shutter)
             Spacer()
             Color.clear.frame(width: 72, height: 72)
         }
@@ -121,8 +162,8 @@ struct CameraScreen: View {
     }
 }
 
-/// Dims everything outside the 4:5 output frame so the user sees what will be cropped (Hikâye 1.1).
-/// Uses the same geometry as the saved crop (FR-002).
+/// Dims everything outside the 4:5 output frame so the user sees what will be cropped (spec 01 Hikâye 1.1).
+/// Uses the same geometry as the saved crop (spec 01 FR-002).
 struct FrameMask: View {
     var body: some View {
         GeometryReader { geo in
@@ -139,17 +180,21 @@ struct FrameMask: View {
 }
 
 struct ShutterButton: View {
+    var isLocked = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             ZStack {
                 Circle().stroke(.white, lineWidth: 4).frame(width: 76, height: 76)
-                Circle().fill(.white).frame(width: 62, height: 62)
+                Circle().fill(.white.opacity(isLocked ? 0.5 : 1)).frame(width: 62, height: 62)
+                if isLocked {
+                    Image(systemName: "lock.fill").font(.title2).foregroundStyle(.black)
+                }
             }
         }
         .buttonStyle(ShutterPressStyle())
-        .accessibilityLabel(Text("camera.shutter"))
+        .accessibilityLabel(Text(isLocked ? "camera.shutterLocked" : "camera.shutter"))
         .accessibilityIdentifier("shutter")
     }
 }
@@ -160,27 +205,27 @@ private struct ShutterPressStyle: ButtonStyle {
     }
 }
 
+/// Lens buttons, drawn inside the preview (plan layout).
 struct LensPicker: View {
     let options: [LensOption]
     let selected: LensKind
     let select: (LensOption) -> Void
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             ForEach(options, id: \.kind) { option in
                 let isSelected = option.kind == selected
                 Button { select(option) } label: {
                     Text(label(for: option.kind))
-                        .font(.subheadline.weight(isSelected ? .semibold : .regular))
+                        .font(.footnote.weight(isSelected ? .semibold : .regular))
                         .foregroundStyle(isSelected ? Color.yellow : .white)
-                        .padding(.horizontal, 14).padding(.vertical, 7)
-                        .background(Capsule().fill(.white.opacity(isSelected ? 0.18 : 0.08)))
+                        .padding(.horizontal, 12).padding(.vertical, 6)
+                        .background(Capsule().fill(.black.opacity(isSelected ? 0.55 : 0.35)))
                 }
                 .accessibilityIdentifier("lens.\(option.kind.rawValue)")
                 .accessibilityAddTraits(isSelected ? .isSelected : [])
             }
         }
-        .frame(height: 36)
     }
 
     private func label(for kind: LensKind) -> LocalizedStringKey {

@@ -1,6 +1,8 @@
 # Spec 03 — Görünüm tarifi, hazır görünümler, canlı önizleme ve çekim sonrası renk işleme
 
 > `/speckit.specify` girdisi. Sürüm: **MVP (v1)**. Bağımlılık: 00, 01, 02. Bu spec uygulamanın çekirdeğini tanımlar (Constitution III).
+>
+> **Yön değişikliği (2026-11-21):** Cihaz denemesinden sonra hazır görünüm şeridi ve görünüm gücü kaydırıcısı **kullanıcıya gösterilmez** (README). Bu spec'ten MVP'de kalanlar: tarif formatı (FR-001), renk işleme (FR-002, FR-003), canlı önizleme ve kayıtta aynı işleme, düzenleme kaydı (FR-005), erişim hakkı soyutlaması (FR-008), lisans kontrolü (FR-009), geliştirici ekranı (Hikâye 4), bulanıklık (Hikâye 3). Hikâye 1, 2 ve 5'in şerit ve kaydırıcıya ait kısımları askıya alındı; tarif artık seçilen örnekten gelir (spec 05). Beş hazır tarif, spec 05'in doğrulamasında referans olarak kalır (spec 05 FR-008).
 
 ## Ne ve neden
 
@@ -44,7 +46,7 @@ Uygulama açılır. Kullanıcı canlı kamera görüntüsünün üzerinde "nası
 **Kabul senaryoları**
 1. **Verilen:** tarif bulanıklık istiyor ve kare derinlik verisiyle çekilmiş. **Olduğunda:** fotoğraf işlenir. **O zaman:** konu net kalır ve arka plan tarifin istediği ölçüde bulanıklaşır. Konunun kenarlarında belirgin bir "kesik" görünmez.
 2. **Verilen:** derinlik verisi yok (lens, mesafe ya da ışık nedeniyle). **Olduğunda:** fotoğraf işlenir. **O zaman:** bulanıklık sessizce atlanır. Görünümün geri kalanı uygulanır ve kullanıcı hata görmez.
-3. Canlı önizlemede bulanıklık yaklaşık olarak gösterilebilir ya da gösterilmeyebilir. [NEEDS CLARIFICATION: açık soru 2]
+3. **Verilen:** tarif bulanıklık istiyor ve canlı derinlik verisi var. **O zaman:** canlı önizlemede bulanıklık yaklaşık olarak gösterilir (karar 2). Derinlik yoksa önizlemede de kayıtta da bulanıklık sessizce atlanır.
 
 ### Hikâye 4 — Geliştirici tarif ayarlar ve dışa aktarır (P1, yalnızca geliştirici derlemesi)
 
@@ -143,16 +145,11 @@ Kullanıcıyla ölçülenler:
 - [ ] Geliştirici ekranından AirDrop ile tarif dışa aktarma ve tekrar içe alma
 - [ ] Isınma altında 10 dakika kullanım
 
-## Açık sorular
+## Kararlar (clarify, 2026-11-21)
 
-1. **Örnek görsel lisansı (MVP için 4–5 görsel):** Seçenekler:
-   - (a) Fotoğrafçıdan satın almak. Tercih edilen; pazarlama da sağlar. Bir Türk yemek/kafe fotoğrafçısıyla görünüm başına sabit ücret ya da ileride gelir paylaşımı.
-   - (b) Unsplash. Lisans, fotoğrafları derleyerek benzer ya da rakip bir hizmet kurmayı yasaklıyor; API kullanımında atıf zorunlu. Ücretli bir uygulamada "görünüm ikonu" olarak kullanmanın bu yasağa girip girmediği belirsiz. Hukuki görüş alınmadan kullanılmamalı.
-   - (c) Kendi çektiğin fotoğraflar. Lisans sorunu yok, ama kalite riski var.
-   - (d) Yapay zekâ ile üretim. "Gerçek değil" güven kaybı riski.
-   Öneri: MVP için (c) veya (a), yani lisans riski sıfır olan seçenekler.
-2. **Canlı önizlemede bulanıklık:** iPhone 12'de canlı derinlikli bulanıklık performansı zorlayabilir. Önizlemede bulanıklık gösterilmeli mi? Gösterilmezse, kullanıcının kaydedilen fotoğrafta bulanıklığı görüp şaşırması "gördüğün = çektiğin" vaadini zayıflatır mı?
-3. **Görünüm gücünün hatırlanması:** Görünüm başına mı, genel mi? (Constitution açık soru 2 ile aynı.)
-4. **"Doğal" seçeneğinin konumu:** Şeridin başında mı, yoksa ayrı bir düğme mi olmalı?
-5. **Uygulama içinde yeniden düzenleme:** Düzenleme kaydı tarif kimliğini taşıyor. İleride kullanıcı eski bir fotoğrafa uygulama içinden başka bir görünüm uygulayabilmeli mi? Bu kapsamı büyütür; şimdilik kapsam dışı.
-6. **MVP görünüm listesi:** Hangi 4–5 hava hedefleniyor? Öneri: aydınlık-havadar, sıcak-kahve tonlu, kontrastlı-koyu, soluk-film, canlı-renkli. Son karar tarif ayarlanırken verilir.
+1. **Örnek görsel lisansı:** (a) Fotoğrafçıdan satın alınır. Sözleşme tamamlanana kadar lisans kaydı olan yer tutucu görseller kullanılır ("kendi üretimimiz" lisansıyla). Yer tutucularla App Store'a çıkılmaz.
+2. **Canlı önizlemede bulanıklık:** Derinlik verisi varsa önizlemede yaklaşık olarak gösterilir, böylece "gördüğün = çektiğin" korunur. Performans bütçesi (SC-004, ≥ 30 kare/sn) bozulursa önce önizlemedeki bulanıklığın çözünürlüğü düşürülür. Önizlemede bulanıklık hiç gösterilemiyorsa, bulanıklık isteyen görünümler MVP'den çıkarılır; kayıtta tek başına bulanıklık yapılmaz.
+3. **Görünüm gücünün hatırlanması:** Görünüm başına hatırlanır. Constitution açık soru 1 bu kararla kapandı (1.1.2).
+4. **"Doğal" seçeneğinin konumu:** Şeridin başında (Hikâye 1.2).
+5. **Uygulama içinde yeniden düzenleme:** Kapsam dışı. Gerekçe spec 01 FR-012 ile aynıdır: tam kütüphane izni gerektirir.
+6. **MVP görünüm listesi:** Beş görünüm: aydınlık-havadar, sıcak-kahve tonlu, kontrastlı-koyu, soluk film, canlı. Adlar ve son ayarlar tarifler hazırlanırken belirlenir.

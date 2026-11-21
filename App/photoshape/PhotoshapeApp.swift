@@ -2,7 +2,8 @@ import SwiftUI
 
 @main
 struct PhotoshapeApp: App {
-    @State private var camera = CameraModel(backend: makeCameraBackend())
+    @State private var camera = CameraModel(backend: makeCameraBackend(), looks: LookSelection(),
+                                            entitlements: EntitlementsFactory.make())
 
     var body: some Scene {
         WindowGroup {

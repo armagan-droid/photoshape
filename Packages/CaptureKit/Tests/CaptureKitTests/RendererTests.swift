@@ -1,4 +1,5 @@
 import CoreGraphics
+import CoreImage
 import Foundation
 import ImageIO
 import Testing
@@ -113,5 +114,31 @@ struct CaptureProcessorTests {
         #expect(p.record.appVersion == "1.0 (1)")
         let origProps = CGImageSourceCopyPropertiesAtIndex(CGImageSourceCreateWithData(p.original as CFData, nil)!, 0, nil) as! [CFString: Any]
         #expect(origProps[kCGImagePropertyGPSDictionary] == nil)
+    }
+}
+
+@Suite("Look applied during processing (spec 03 FR-005)")
+struct LookProcessingTests {
+    @Test func appliesTheGivenTransformAndRecordsTheLook() throws {
+        let ctx = CGContext(data: nil, width: 400, height: 500, bitsPerComponent: 8, bytesPerRow: 0,
+                            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        ctx.setFillColor(CGColor(red: 0.5, green: 0.5, blue: 0.5, alpha: 1))
+        ctx.fill(CGRect(x: 0, y: 0, width: 400, height: 500))
+        let data = NSMutableData()
+        let dest = CGImageDestinationCreateWithData(data, UTType.jpeg.identifier as CFString, 1, nil)!
+        CGImageDestinationAddImage(dest, ctx.makeImage()!, nil)
+        #expect(CGImageDestinationFinalize(dest))
+
+        let look = EditRecord.LookReference(id: "test", version: 1, strength: 1)
+        let p = try CaptureProcessor.process(original: data as Data, appVersion: "t", look: look) { image in
+            image.applyingFilter("CIColorMatrix", parameters: ["inputRVector": CIVector(x: 0, y: 0, z: 0, w: 0)]) // red → 0
+        }
+        #expect(p.record.look == look)
+        let thumb = p.thumbnail
+        var px = [UInt8](repeating: 0, count: 4)
+        let c = CGContext(data: &px, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
+                          space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        c.draw(thumb, in: CGRect(x: -thumb.width / 2, y: -thumb.height / 2, width: thumb.width, height: thumb.height))
+        #expect(px[0] < 20 && px[1] > 100, "look transform was applied")
     }
 }

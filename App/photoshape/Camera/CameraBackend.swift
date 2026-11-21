@@ -1,13 +1,10 @@
-import AVFoundation
 import CaptureKit
-import CoreGraphics
+import CoreImage
 
 /// Camera hardware behind the camera screen.
 protocol CameraBackend: AnyObject, Sendable {
-    /// Session for the live preview layer; nil when the backend supplies `stillPreview` instead.
-    var previewSession: AVCaptureSession? { get }
-    /// Upright preview image for backends without a session (simulator).
-    var stillPreview: CGImage? { get }
+    /// Newest camera frame, upright (portrait), preview-sized. Read by the look preview on every draw.
+    func latestPreviewImage() -> CIImage?
 
     /// Current camera permission. Asks the user when it has not been decided yet.
     func requestAccess() async -> Bool

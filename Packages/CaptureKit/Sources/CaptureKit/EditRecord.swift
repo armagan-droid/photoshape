@@ -11,18 +11,30 @@ public struct EditRecord: Codable, Sendable, Hashable {
     public var appVersion: String
     /// The 4:5 crop of the upright original.
     public var crop: NormalizedRect
+    /// The look applied, if any (spec 03 FR-005). Absent for "Doğal" and for spec 01 photos.
+    public var look: LookReference?
 
-    public init(appVersion: String, crop: NormalizedRect) {
+    public init(appVersion: String, crop: NormalizedRect, look: LookReference? = nil) {
         self.appVersion = appVersion
         self.crop = crop
+        self.look = look
+    }
+
+    public struct LookReference: Codable, Sendable, Hashable {
+        public var id: String
+        public var version: Int
+        /// 0…1
+        public var strength: Double
+        public init(id: String, version: Int, strength: Double) { self.id = id; self.version = version; self.strength = strength }
     }
 
     /// The default 4:5 crop for an upright image of this size.
-    public static func `default`(appVersion: String, orientedWidth: Int, orientedHeight: Int) -> EditRecord {
+    public static func `default`(appVersion: String, orientedWidth: Int, orientedHeight: Int, look: LookReference? = nil) -> EditRecord {
         let p = CropGeometry.pixelCrop(width: orientedWidth, height: orientedHeight)
         let w = Double(max(orientedWidth, 1)), h = Double(max(orientedHeight, 1))
         return EditRecord(appVersion: appVersion,
-                          crop: NormalizedRect(x: Double(p.x) / w, y: Double(p.y) / h, w: Double(p.w) / w, h: Double(p.h) / h))
+                          crop: NormalizedRect(x: Double(p.x) / w, y: Double(p.y) / h, w: Double(p.w) / w, h: Double(p.h) / h),
+                          look: look)
     }
 
     public func encoded() throws -> Data {

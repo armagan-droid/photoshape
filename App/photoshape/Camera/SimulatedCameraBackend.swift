@@ -8,15 +8,16 @@ import UniformTypeIdentifiers
 /// portrait capture (landscape pixels + EXIF orientation 6), so cropping, saving, sharing and the
 /// Photos edit record run end to end. Never part of a device build.
 final class SimulatedCameraBackend: CameraBackend, @unchecked Sendable {
-    let previewSession: AVCaptureSession? = nil
-    let stillPreview: CGImage?
+    private let still: CIImage?
     private let captureData: Data?
 
     init() {
         let upright = Self.drawScene(width: 1512, height: 2016)
-        stillPreview = upright
+        still = upright.map { CIImage(cgImage: $0) }
         captureData = upright.flatMap(Self.encodeAsSensorCapture)
     }
+
+    func latestPreviewImage() -> CIImage? { still }
 
     func requestAccess() async -> Bool {
         // UI tests use this to reach the permission-denied screen.

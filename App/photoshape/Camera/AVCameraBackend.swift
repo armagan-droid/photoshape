@@ -1,5 +1,6 @@
 import AVFoundation
 import CaptureKit
+import CoreImage
 import FrameKit
 
 /// AVFoundation camera. All session and device work happens on `queue`; that is what makes the
@@ -24,8 +25,7 @@ final class AVCameraBackend: NSObject, CameraBackend, @unchecked Sendable {
     /// Photos stay near 12 MP: enough for Instagram, quick to capture and save (SC-002).
     private static let maxPhotoPixels = 12_600_000
 
-    var previewSession: AVCaptureSession? { session }
-    var stillPreview: CGImage? { nil }
+    func latestPreviewImage() -> CIImage? { frameSource.latestImage() }
 
     deinit { observers.forEach(NotificationCenter.default.removeObserver) }
 
@@ -144,6 +144,10 @@ final class AVCameraBackend: NSObject, CameraBackend, @unchecked Sendable {
         if session.canAddOutput(videoOutput) {
             videoOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
             videoOutput.alwaysDiscardsLateVideoFrames = true
+            // Screen-sized frames: the look preview renders every frame (spec 03 SC-004).
+            // (Must turn off automatic sizing first, or AVFoundation throws.)
+            videoOutput.automaticallyConfiguresOutputBufferDimensions = false
+            videoOutput.deliversPreviewSizedOutputBuffers = true
             videoOutput.setSampleBufferDelegate(frameSource, queue: videoQueue)
             session.addOutput(videoOutput)
         }

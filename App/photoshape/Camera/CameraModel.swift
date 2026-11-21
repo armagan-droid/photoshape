@@ -1,4 +1,5 @@
 import CaptureKit
+import LookKit
 import OSLog
 import SwiftUI
 import UIKit
@@ -37,15 +38,27 @@ final class CameraModel {
     /// Incremented on every accepted shutter press; drives the flash and the haptic.
     private(set) var shutterCount = 0
     var reviewing: LastCapture?
+    /// Incremented when the shutter is pressed on a locked look (light "no" haptic; spec 07 adds the paywall).
+    private(set) var lockedPressCount = 0
 
     let backend: CameraBackend
+    let looks: LookSelection
+    let entitlements: Entitlements
+    let renderer = LookRenderer()
     private var gate = ShutterGate()
     private var isActive = false
 
     /// Local diagnostics only (stays on the device, Constitution I).
     private static let log = Logger(subsystem: "photoshape", category: "camera")
 
-    init(backend: CameraBackend) { self.backend = backend }
+    init(backend: CameraBackend, looks: LookSelection, entitlements: Entitlements) {
+        self.backend = backend
+        self.looks = looks
+        self.entitlements = entitlements
+    }
+
+    /// Whether the shutter shows the lock (Hikâye 5.2): the look can be tried live but not captured.
+    var isSelectedLookLocked: Bool { !entitlements.isAvailable(looks.selected) }
 
     func activate() async {
         guard !isActive else { return }
@@ -68,7 +81,9 @@ final class CameraModel {
         Task { await backend.select(option) }
     }
 
-    func tapToFocus(viewPoint: CGPoint, devicePoint: CGPoint) {
+    func tapToFocus(viewPoint: CGPoint, viewSize: CGSize) {
+        let devicePoint = DevicePoint.fromPortraitPreview(viewPoint, viewSize: viewSize)
+        Diagnostics.log("tap at view \(viewPoint) in \(viewSize) → device \(devicePoint)")
         focusMarker = FocusMarker(location: viewPoint)
         let marker = focusMarker
         Task {
@@ -79,14 +94,21 @@ final class CameraModel {
     }
 
     func shutter() {
-        guard access == .authorized, gate.press(at: ProcessInfo.processInfo.systemUptime) else { return }
+        guard access == .authorized else { return }
+        guard !isSelectedLookLocked else { lockedPressCount += 1; return }
+        guard gate.press(at: ProcessInfo.processInfo.systemUptime) else { return }
         shutterCount += 1 // feedback right away, before the capture finishes (SC-002)
+        // The look at the moment of the press is what gets saved (spec 03 uç durum "eşzamanlılık").
+        let recipe = looks.selected, strength = looks.strength, renderer = renderer
+        let lookRef = recipe.id == LookRecipe.natural.id || strength == 0
+            ? nil : EditRecord.LookReference(id: recipe.id, version: recipe.version, strength: strength)
         Task {
             defer { gate.finish() }
             do {
                 let original = try await backend.capturePhoto()
                 let processed = try await Task.detached(priority: .userInitiated) {
-                    try CaptureProcessor.process(original: original, appVersion: AppInfo.version)
+                    try CaptureProcessor.process(original: original, appVersion: AppInfo.version, look: lookRef,
+                                                 applyLook: lookRef == nil ? nil : { renderer.render($0, recipe: recipe, strength: strength) })
                 }.value
                 let url = FileManager.default.temporaryDirectory
                     .appendingPathComponent("photoshape-\(UUID().uuidString).jpg")

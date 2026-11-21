@@ -1,4 +1,5 @@
 import AVFoundation
+import CoreImage
 import FrameKit
 
 /// Live frames for analysis layers (spec 01 FR-010). Only the newest frame is buffered, so a slow
@@ -6,6 +7,12 @@ import FrameKit
 final class CameraFrameSource: NSObject, FrameSource, AVCaptureVideoDataOutputSampleBufferDelegate, @unchecked Sendable {
     private let lock = NSLock()
     private var continuation: AsyncStream<Frame>.Continuation?
+    private var latest: CVPixelBuffer?
+
+    /// Newest frame, upright, for the live look preview.
+    func latestImage() -> CIImage? {
+        lock.withLock { latest }.map { CIImage(cvPixelBuffer: $0).oriented(.right) }
+    }
 
     func frames() -> AsyncStream<Frame> {
         let (stream, continuation) = AsyncStream<Frame>.makeStream(bufferingPolicy: .bufferingNewest(1))
@@ -17,8 +24,12 @@ final class CameraFrameSource: NSObject, FrameSource, AVCaptureVideoDataOutputSa
     }
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        guard let continuation = lock.withLock({ continuation }),
-              let buffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        guard let buffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        let continuation = lock.withLock { () -> AsyncStream<Frame>.Continuation? in
+            latest = buffer
+            return self.continuation
+        }
+        guard let continuation else { return }
         // Buffers stay in sensor orientation; for the back camera held upright that is "right".
         continuation.yield(Frame(timestamp: CMSampleBufferGetPresentationTimeStamp(sampleBuffer).seconds,
                                  pixelBuffer: buffer, orientation: .right))

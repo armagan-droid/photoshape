@@ -1,6 +1,13 @@
 # Spec 05 — Referans ekran görüntüsünden görünüm tarifi çıkarma
 
-> `/speckit.specify` girdisi. Sürüm: **v2 (ana özellik)**. Bağımlılık: 00, 03 (tarif formatı), 04 (sahne türleri), 07 (ücretsiz kota için erişim hakkı).
+> `/speckit.specify` girdisi. Sürüm: **v1 (MVP), ana akış** (2026-11-21 yön değişikliğiyle v2'den taşındı). Bağımlılık: 00, 01, 03 (tarif formatı ve renk motoru), 04 (sahne türleri).
+>
+> **Yön değişikliği (2026-11-21):** Uygulama örnek fotoğrafla açılır (README). Bu spec artık ürünün çekirdeğidir. Değişiklikler:
+> - Hikâye 0 eklendi: açılış akışı.
+> - Örnekten yalnızca renk değil, **çekim hedefleri** de çıkarılır (FR-009): parlaklık, sıcaklık, sahne türü, çekim açısı, konunun boyutu ve yeri, ışık. Bunlar spec 02'nin ayarlarına ve spec 04'ün yönlendirmelerine girdi olur.
+> - Renk havası kullanıcıya filtre olarak sunulmaz; kaydırıcı ya da şerit yoktur. Eşleştirme otomatiktir (FR-010).
+> - MVP tamamen ücretsizdir. Kota (Hikâye 5, FR-006) v2'de spec 07 ile birlikte gelir; erişim hakkı soyutlaması MVP'de "açık" yanıtını verir.
+> - FR-007 değişti: hazır görünüm şeridi yoktur; kullanıcının örnekleri "Örneklerim" listesinde durur.
 
 ## Ne ve neden
 
@@ -14,6 +21,13 @@ Rekabetteki asıl fark budur. "Yapay zekâ fotoğraf koçu" uygulamaları ayar v
 - Işık aktarılmaz. Referanstaki ışık tahmin edilip tavsiyeye çevrilir ("bu fotoğraf pencere ışığıyla çekilmiş, pencereye yaklaş").
 
 ## Kullanıcı senaryoları
+
+### Hikâye 0 — Örnekle başlar (P1, 2026-11-21)
+
+**Kabul senaryoları**
+1. **Verilen:** uygulama ilk kez açılır. **O zaman:** "Nasıl bir fotoğraf çekmek istiyorsun? Beğendiğin bir fotoğrafı seç." sorusu ve "Fotoğraf seç" düğmesi görünür. Örneksiz çekmek için kameraya geçmek de mümkündür.
+2. **Verilen:** daha önce örnek seçilmiş. **Olduğunda:** uygulama açılır. **O zaman:** kamera son örnekle hazır gelir; örnek köşede küçük bir ikon olarak görünür. İkona dokunmak örneği değiştirmeyi ya da kaldırmayı sağlar.
+3. **Verilen:** örnek seçilmiş ve kamera açık. **O zaman:** kamera ayarları örneğe göre yapılır (spec 02), açı/mesafe ve ışık yönlendirmeleri örneğe göre verilir (spec 04) ve canlı görüntü örneğin renk havasıyla gösterilir. Kullanıcı hiçbir ayara dokunmaz.
 
 ### Hikâye 1 — Ekran görüntüsünden görünüm (P1)
 
@@ -75,8 +89,10 @@ Rekabetteki asıl fark budur. "Yapay zekâ fotoğraf koçu" uygulamaları ayar v
   Yerli alternatif SC-004'ü sağlıyorsa üçüncü taraf kütüphane eklenmez.
 - **FR-005:** Referans görüntü ve çıkarılan tarif cihazdan çıkmaz (Constitution I).
 - **FR-006:** Kota, erişim hakkı soyutlaması üzerinden sorulur (Constitution VII). Sayaç Keychain'de tutulur.
-- **FR-007:** Kullanıcı görünümleri, hazır görünümlerle aynı şeritte, ayrı bir bölümde gösterilir. Kamera ve işleme açısından aralarında fark yoktur.
-- **FR-008:** Hazır görünümlerin tarifleri, bu modülün doğrulanmasında referans olarak kullanılır (bkz. SC-002).
+- **FR-007:** Kullanıcının örnekleri "Örneklerim" listesinde durur (küçük ikon). Hazır görünüm şeridi yoktur (2026-11-21). Kamera ve işleme açısından örnekten çıkan tarif ile diğer tarifler arasında fark yoktur.
+- **FR-008:** Hazır görünümlerin tarifleri, bu modülün doğrulanmasında referans olarak kullanılır (bkz. SC-002). Kullanıcıya gösterilmezler.
+- **FR-009:** Çıkarma, tarifin yanında **çekim hedefleri** üretir: hedef parlaklık (tarifin `exposureBias` alanı, spec 02 FR-004), sıcak/soğuk eğilimi, sahne türü, çekim açısı (tepeden / eğik / göz hizası), konunun kareye oranı ve konumu, ışığın türü ve yönü (pencere, ters ışık, loş). Bunlar spec 02 ve spec 04'e girdi olur.
+- **FR-010:** Renk havası, kullanıcı hiçbir şey seçmeden canlı önizlemede ve kayıtta uygulanır. Güç kaydırıcısı yoktur; eşleştirmenin ölçüsü tarifin kendisindedir.
 
 ## Temel varlıklar
 
