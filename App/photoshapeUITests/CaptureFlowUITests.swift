@@ -9,8 +9,10 @@ final class CaptureFlowUITests: XCTestCase {
 
     private func launch(_ language: String, arguments: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
+        // Spec 01 flows: no example photo, skip the example prompt.
         app.launchArguments = ["-AppleLanguages", "(\(language))",
-                               "-AppleLocale", language == "tr" ? "tr_TR" : "en_US"] + arguments
+                               "-AppleLocale", language == "tr" ? "tr_TR" : "en_US",
+                               "-ResetReferences", "YES", "-ReferencePrompt", "NO"] + arguments
         app.launch()
         return app
     }

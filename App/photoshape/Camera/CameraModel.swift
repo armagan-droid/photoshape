@@ -1,4 +1,5 @@
 import CaptureKit
+import CoreImage
 import LookKit
 import OSLog
 import SwiftUI
@@ -38,27 +39,74 @@ final class CameraModel {
     /// Incremented on every accepted shutter press; drives the flash and the haptic.
     private(set) var shutterCount = 0
     var reviewing: LastCapture?
-    /// Incremented when the shutter is pressed on a locked look (light "no" haptic; spec 07 adds the paywall).
-    private(set) var lockedPressCount = 0
+    var showingReferences = false
+    /// Color adjustments that make the current scene look like the example (spec 05 FR-010); zero without one.
+    private(set) var adjustments = LookAdjustments.zero
 
     let backend: CameraBackend
-    let looks: LookSelection
+    let references: ReferenceStore
     let entitlements: Entitlements
     let renderer = LookRenderer()
+    private let sampler = FrameSampler()
+    private var matchTask: Task<Void, Never>?
+    private var exposureBias = 0.0
+    private var matchedReferenceID: UUID?
     private var gate = ShutterGate()
     private var isActive = false
 
     /// Local diagnostics only (stays on the device, Constitution I).
     private static let log = Logger(subsystem: "photoshape", category: "camera")
 
-    init(backend: CameraBackend, looks: LookSelection, entitlements: Entitlements) {
+    init(backend: CameraBackend, references: ReferenceStore, entitlements: Entitlements) {
         self.backend = backend
-        self.looks = looks
+        self.references = references
         self.entitlements = entitlements
     }
 
-    /// Whether the shutter shows the lock (Hikâye 5.2): the look can be tried live but not captured.
-    var isSelectedLookLocked: Bool { !entitlements.isAvailable(looks.selected) }
+    /// The look the preview and the saved photo use right now.
+    var currentLook: LookRecipe {
+        var recipe = LookRecipe.natural
+        recipe.adjustments = adjustments
+        return recipe
+    }
+
+    // MARK: - Matching the example (spec 05 FR-009/010, spec 02 FR-004)
+
+    private func startMatching() {
+        matchTask?.cancel()
+        matchTask = Task { [weak self] in
+            while !Task.isCancelled {
+                await self?.matchOnce()
+                try? await Task.sleep(for: .milliseconds(800))
+            }
+        }
+    }
+
+    private func matchOnce() async {
+        guard entitlements.isAvailable(.exampleMatching), let reference = references.current else {
+            matchedReferenceID = nil
+            if adjustments != .zero { adjustments = .zero }
+            if exposureBias != 0 { exposureBias = 0; await backend.setExposureBias(0) }
+            return
+        }
+        guard let frame = backend.latestPreviewImage() else { return }
+        let sampler = sampler, profile = reference.profile
+        guard let result = await Task.detached(priority: .utility, operation: {
+            sampler.sample(frame).map { LookMatcher.match(scene: $0, to: profile) }
+        }).value else { return }
+
+        // The camera takes over the brightness difference step by step; the look covers what is left.
+        let bias = min(1.5, max(-1.5, exposureBias + 0.5 * result.exposureStops))
+        if abs(bias - exposureBias) > 0.05 {
+            exposureBias = bias
+            await backend.setExposureBias(bias)
+        }
+        // A new example applies at once; after that, changes are eased so the preview does not flicker.
+        let isNew = matchedReferenceID != reference.id
+        matchedReferenceID = reference.id
+        adjustments = isNew ? result.adjustments : adjustments.blended(toward: result.adjustments, by: 0.4)
+        Diagnostics.log("match: bias \(String(format: "%.2f", bias)) temp \(String(format: "%.2f", adjustments.temperature)) sat \(String(format: "%.2f", adjustments.saturation))")
+    }
 
     func activate() async {
         guard !isActive else { return }
@@ -66,12 +114,14 @@ final class CameraModel {
         access = await backend.requestAccess() ? .authorized : .denied
         guard access == .authorized else { return }
         lensOptions = await backend.start()
+        startMatching()
         if let option = lensOptions.first(where: { $0.kind == selectedLens }) { await backend.select(option) }
     }
 
     func deactivate() async {
         guard isActive else { return }
         isActive = false
+        matchTask?.cancel()
         await backend.stop()
     }
 
@@ -95,20 +145,20 @@ final class CameraModel {
 
     func shutter() {
         guard access == .authorized else { return }
-        guard !isSelectedLookLocked else { lockedPressCount += 1; return }
         guard gate.press(at: ProcessInfo.processInfo.systemUptime) else { return }
         shutterCount += 1 // feedback right away, before the capture finishes (SC-002)
-        // The look at the moment of the press is what gets saved (spec 03 uç durum "eşzamanlılık").
-        let recipe = looks.selected, strength = looks.strength, renderer = renderer
-        let lookRef = recipe.id == LookRecipe.natural.id || strength == 0
-            ? nil : EditRecord.LookReference(id: recipe.id, version: recipe.version, strength: strength)
+        // What is on screen at the moment of the press is what gets saved (spec 03 uç durum "eşzamanlılık").
+        let recipe = currentLook, renderer = renderer
+        let lookRef = references.current.flatMap { ref in
+            adjustments == .zero ? nil : EditRecord.LookReference(id: "reference:\(ref.id.uuidString)", version: ref.profile.version, strength: 1)
+        }
         Task {
             defer { gate.finish() }
             do {
                 let original = try await backend.capturePhoto()
                 let processed = try await Task.detached(priority: .userInitiated) {
                     try CaptureProcessor.process(original: original, appVersion: AppInfo.version, look: lookRef,
-                                                 applyLook: lookRef == nil ? nil : { renderer.render($0, recipe: recipe, strength: strength) })
+                                                 applyLook: lookRef == nil ? nil : { renderer.render($0, recipe: recipe, strength: 1) })
                 }.value
                 let url = FileManager.default.temporaryDirectory
                     .appendingPathComponent("photoshape-\(UUID().uuidString).jpg")
@@ -145,5 +195,34 @@ enum AppInfo {
     static var version: String {
         let info = Bundle.main.infoDictionary
         return "\(info?["CFBundleShortVersionString"] as? String ?? "0") (\(info?["CFBundleVersion"] as? String ?? "0"))"
+    }
+}
+
+/// Turns a preview frame into the small color sample the matcher uses.
+final class FrameSampler: @unchecked Sendable {
+    private let context = CIContext(options: [.cacheIntermediates: false])
+
+    func sample(_ image: CIImage) -> SceneSample? {
+        let e = image.extent
+        guard e.width > 0, e.height > 0 else { return nil }
+        let scale = Double(SceneSample.gridWidth * 4) / e.width
+        let small = image.transformed(by: CGAffineTransform(translationX: -e.minX, y: -e.minY)
+            .concatenating(CGAffineTransform(scaleX: scale, y: scale)))
+        guard let cg = context.createCGImage(small, from: small.extent, format: .RGBA8,
+                                             colorSpace: CGColorSpace(name: CGColorSpace.sRGB)) else { return nil }
+        return SceneSample(image: cg)
+    }
+}
+
+private extension LookAdjustments {
+    func blended(toward t: LookAdjustments, by k: Double) -> LookAdjustments {
+        func mix(_ a: Double, _ b: Double) -> Double { a + (b - a) * k }
+        var r = self
+        r.exposure = mix(exposure, t.exposure); r.contrast = mix(contrast, t.contrast)
+        r.shadows = mix(shadows, t.shadows); r.highlights = mix(highlights, t.highlights)
+        r.fade = mix(fade, t.fade); r.temperature = mix(temperature, t.temperature); r.tint = mix(tint, t.tint)
+        r.saturation = mix(saturation, t.saturation); r.vibrance = mix(vibrance, t.vibrance)
+        r.vignette = mix(vignette, t.vignette); r.grain = mix(grain, t.grain)
+        return r
     }
 }

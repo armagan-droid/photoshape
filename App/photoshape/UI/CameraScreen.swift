@@ -2,13 +2,12 @@ import CaptureKit
 import LookKit
 import SwiftUI
 
-/// Camera and look choice on one screen (spec 03 FR-006). Layout (plan): question on top, preview pinned to the top
-/// with lens buttons inside it, then look strength, the look strip and the shutter row.
+/// The camera, set up from the chosen example photo (spec 05 Hikâye 0). Without an example the user first sees the
+/// prompt to pick one. Layout: example chip on top, preview with lens buttons inside, shutter row.
 struct CameraScreen: View {
     @Bindable var model: CameraModel
     @Environment(\.scenePhase) private var scenePhase
     @State private var flash = false
-    @State private var showQuestion = true
 
     var body: some View {
         ZStack {
@@ -16,11 +15,16 @@ struct CameraScreen: View {
             switch model.access {
             case .unknown: EmptyView()
             case .denied: PermissionDeniedView()
-            case .authorized: camera
+            case .authorized:
+                if needsPrompt { ReferencePromptView(store: model.references) } else { camera }
             }
         }
         .preferredColorScheme(.dark)
-        .task { await model.activate() }
+        .task {
+            await injectTestReferenceIfAsked()
+            await model.activate()
+        }
+        .sheet(isPresented: $model.showingReferences) { ReferencesSheet(store: model.references) }
         .onChange(of: scenePhase) { _, phase in
             Task {
                 if phase == .active { await model.activate() } else if phase == .background { await model.deactivate() }
@@ -32,39 +36,41 @@ struct CameraScreen: View {
         }
     }
 
+    private var needsPrompt: Bool {
+        #if DEBUG
+        // Launch arguments arrive as strings ("NO"), so read it as a string.
+        if UserDefaults.standard.string(forKey: "ReferencePrompt")?.uppercased() == "NO" { return false }
+        #endif
+        return model.references.current == nil && !model.references.skippedPrompt
+    }
+
     private var camera: some View {
         VStack(spacing: 0) {
-            question
+            ReferenceChip(store: model.references) { model.showingReferences = true }
+                .frame(minHeight: 44)
+                .padding(.bottom, 6)
             preview
-            Spacer(minLength: 8)
-            strengthSlider
-            LookStrip(selection: model.looks, isLocked: { !model.entitlements.isAvailable($0) }) {
-                showQuestion = false
-            }
-            .padding(.top, 6)
             Spacer(minLength: 8)
             controls
             Spacer(minLength: 8)
         }
         .overlay(alignment: .top) { noticeBanner }
-        .task {
-            try? await Task.sleep(for: .seconds(4))
-            withAnimation(.easeOut(duration: 0.6)) { showQuestion = false }
-        }
     }
 
-    private var question: some View {
-        Text("camera.question")
-            .font(.headline)
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity, minHeight: 36)
-            .opacity(showQuestion ? 1 : 0)
-            .accessibilityIdentifier("question")
+    /// Developer builds: `-UITestReference <sample file>` adds a bundled sample as the example (UI tests cannot
+    /// drive the system photo picker reliably).
+    private func injectTestReferenceIfAsked() async {
+        #if DEBUG
+        guard let name = UserDefaults.standard.string(forKey: "UITestReference"),
+              let dir = try? LookCatalog.bundled().directory,
+              let data = try? Data(contentsOf: dir.appendingPathComponent(name)) else { return }
+        await model.references.add(imageData: data)
+        #endif
     }
 
     private var preview: some View {
-        LookPreview(source: model.backend.latestPreviewImage, look: model.looks.selected,
-                    strength: model.looks.strength, renderer: model.renderer) { point, size in
+        LookPreview(source: model.backend.latestPreviewImage, look: model.currentLook,
+                    strength: 1, renderer: model.renderer) { point, size in
             model.tapToFocus(viewPoint: point, viewSize: size)
         }
         .aspectRatio(3.0 / 4.0, contentMode: .fit)
@@ -81,19 +87,6 @@ struct CameraScreen: View {
             withAnimation(.easeOut(duration: 0.25)) { flash = false }
         }
         .sensoryFeedback(.impact(weight: .medium), trigger: model.shutterCount)
-        .sensoryFeedback(.warning, trigger: model.lockedPressCount)
-    }
-
-    /// One unnumbered slider (Constitution II). Hidden for "Doğal", which has no strength.
-    private var strengthSlider: some View {
-        Slider(value: Binding(get: { model.looks.strength }, set: { model.looks.strength = $0 }), in: 0...1)
-            .tint(.white)
-            .padding(.horizontal, 32)
-            .opacity(model.looks.isNatural ? 0 : 1)
-            .disabled(model.looks.isNatural)
-            .accessibilityLabel(Text("look.strength"))
-            .accessibilityIdentifier("strength")
-            .frame(height: 32)
     }
 
     @ViewBuilder private var focusMarker: some View {
@@ -133,7 +126,7 @@ struct CameraScreen: View {
             .animation(.spring(duration: 0.3), value: model.lastCapture?.id)
 
             Spacer()
-            ShutterButton(isLocked: model.isSelectedLookLocked, action: model.shutter)
+            ShutterButton(action: model.shutter)
             Spacer()
             Color.clear.frame(width: 72, height: 72)
         }

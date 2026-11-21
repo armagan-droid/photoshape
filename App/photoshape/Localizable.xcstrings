@@ -52,23 +52,6 @@
         }
       }
     },
-    "camera.question": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "What kind of photo do you want?"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nasıl bir fotoğraf istiyorsun?"
-          }
-        }
-      }
-    },
     "camera.shutter": {
       "extractionState": "manual",
       "localizations": {
@@ -82,23 +65,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fotoğraf çek"
-          }
-        }
-      }
-    },
-    "camera.shutterLocked": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Take photo (look locked)"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fotoğraf çek (görünüm kilitli)"
           }
         }
       }
@@ -188,19 +154,206 @@
         }
       }
     },
-    "look.strength": {
+    "reference.analyzing": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Look strength"
+            "value": "Looking at your photo…"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Görünüm gücü"
+            "value": "Fotoğrafına bakıyorum…"
+          }
+        }
+      }
+    },
+    "reference.choose": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose an example"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Örnek seç"
+          }
+        }
+      }
+    },
+    "reference.current": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shooting like your example"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Örneğine göre çekiyorsun"
+          }
+        }
+      }
+    },
+    "reference.failed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't use this photo. Try another one."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu fotoğrafı kullanamadım. Başka bir fotoğraf dene."
+          }
+        }
+      }
+    },
+    "reference.pick": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a photo"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fotoğraf seç"
+          }
+        }
+      }
+    },
+    "reference.prompt.body": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick a photo you like. I'll set up the camera to shoot like it."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beğendiğin bir fotoğrafı seç. Kamerayı ona benzer çekecek şekilde ayarlayayım."
+          }
+        }
+      }
+    },
+    "reference.prompt.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What kind of photo do you want to take?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nasıl bir fotoğraf çekmek istiyorsun?"
+          }
+        }
+      }
+    },
+    "reference.skip": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shoot without an example"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Örneksiz çek"
+          }
+        }
+      }
+    },
+    "references.delete": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sil"
+          }
+        }
+      }
+    },
+    "references.new": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a new photo"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeni fotoğraf seç"
+          }
+        }
+      }
+    },
+    "references.none": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shoot without an example"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Örneksiz çek"
+          }
+        }
+      }
+    },
+    "references.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My examples"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Örneklerim"
           }
         }
       }

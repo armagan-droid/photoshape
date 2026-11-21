@@ -30,6 +30,7 @@ final class SimulatedCameraBackend: CameraBackend, @unchecked Sendable {
     }
 
     func stop() async {}
+    func setExposureBias(_ stops: Double) async {}
     func select(_ lens: LensOption) async {}
     func focus(atDevicePoint point: CGPoint) async {}
 

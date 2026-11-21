@@ -59,6 +59,15 @@ final class AVCameraBackend: NSObject, CameraBackend, @unchecked Sendable {
         }
     }
 
+    func setExposureBias(_ stops: Double) async {
+        await onQueue {
+            self.withLockedDevice { device in
+                let bias = Float(stops).clamped(to: device.minExposureTargetBias...device.maxExposureTargetBias)
+                device.setExposureTargetBias(bias, completionHandler: nil)
+            }
+        }
+    }
+
     func focus(atDevicePoint point: CGPoint) async {
         await onQueue {
             self.lastTapUptime = ProcessInfo.processInfo.systemUptime
@@ -242,4 +251,8 @@ private final class PhotoCaptureDelegate: NSObject, AVCapturePhotoCaptureDelegat
         else if let data { completion(.success(data)) }
         else { completion(.failure(CameraError.noPhotoData)) }
     }
+}
+
+private extension Float {
+    func clamped(to range: ClosedRange<Float>) -> Float { Swift.min(range.upperBound, Swift.max(range.lowerBound, self)) }
 }

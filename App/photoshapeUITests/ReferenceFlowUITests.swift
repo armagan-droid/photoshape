@@ -1,0 +1,84 @@
+import XCTest
+
+/// Spec 05 step 1 in the simulator: start from an example photo, the camera follows it.
+/// The system photo picker cannot be driven reliably, so tests add a bundled sample with `-UITestReference`.
+@MainActor
+final class ReferenceFlowUITests: XCTestCase {
+    override func setUp() { continueAfterFailure = false }
+
+    private func launch(_ arguments: [String], language: String = "en") -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments = ["-AppleLanguages", "(\(language))", "-AppleLocale", language == "tr" ? "tr_TR" : "en_US"] + arguments
+        app.launch()
+        return app
+    }
+
+    private func previewBrightness(_ app: XCUIApplication) -> Double {
+        let image = app.descendants(matching: .any)["preview"].screenshot().image
+        guard let cg = image.cgImage else { return 0 }
+        let w = 30, h = 40
+        var px = [UInt8](repeating: 0, count: w * h * 4)
+        let ctx = CGContext(data: &px, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
+                            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        ctx.draw(cg, in: CGRect(x: 0, y: 0, width: w, height: h))
+        var sum = 0.0
+        for i in stride(from: 0, to: px.count, by: 4) { sum += Double(px[i]) + Double(px[i + 1]) + Double(px[i + 2]) }
+        return sum / Double(w * h * 3)
+    }
+
+    func testFirstLaunchAsksForAnExampleAndCanSkip() {
+        let app = launch(["-ResetReferences", "YES"], language: "tr")
+        XCTAssertTrue(app.staticTexts["Nasıl bir fotoğraf çekmek istiyorsun?"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["pickReference"].exists)
+        app.buttons["skipReference"].tap()
+        XCTAssertTrue(app.buttons["shutter"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["referenceChip"].label.contains("Örnek seç"))
+    }
+
+    func testDarkExampleMakesThePreviewDarkerAndIsRemembered() {
+        var app = launch(["-ResetReferences", "YES", "-ReferencePrompt", "NO"])
+        XCTAssertTrue(app.buttons["shutter"].waitForExistence(timeout: 10))
+        sleep(2)
+        let plain = previewBrightness(app)
+        app.terminate()
+
+        app = launch(["-UITestReference", "03-moody-table.jpg"])
+        XCTAssertTrue(app.buttons["shutter"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["referenceChip"].label.contains("example"))
+        sleep(4) // a few matching rounds
+        let matched = previewBrightness(app)
+        XCTAssertLessThan(matched, plain - 8, "preview follows the darker example (plain \(plain), matched \(matched))")
+        app.terminate()
+
+        // Next launch opens straight into the camera with the same example (Hikâye 0.2).
+        app = launch([])
+        XCTAssertTrue(app.buttons["shutter"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["pickReference"].exists)
+        XCTAssertTrue(app.buttons["referenceChip"].label.contains("example"))
+    }
+
+    func testExamplesSheetCanSwitchToNoExample() {
+        let app = launch(["-ResetReferences", "YES", "-UITestReference", "01-morning-light.jpg"])
+        XCTAssertTrue(app.buttons["referenceChip"].waitForExistence(timeout: 10))
+        app.buttons["referenceChip"].tap()
+        XCTAssertTrue(app.buttons["newReference"].waitForExistence(timeout: 5))
+        XCTAssertGreaterThanOrEqual(app.buttons.matching(identifier: "reference.item").count, 1)
+        app.buttons["noReference"].tap()
+        XCTAssertTrue(app.buttons["shutter"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["referenceChip"].label.contains("Choose"))
+    }
+
+    func testCaptureWithAnExample() {
+        let app = launch(["-ResetReferences", "YES", "-UITestReference", "02-coffee-break.jpg"])
+        XCTAssertTrue(app.buttons["shutter"].waitForExistence(timeout: 10))
+        sleep(2)
+        app.buttons["shutter"].tap()
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        if springboard.alerts.firstMatch.waitForExistence(timeout: 2) {
+            springboard.alerts.firstMatch.buttons.element(boundBy: springboard.alerts.firstMatch.buttons.count - 1).tap()
+        }
+        XCTAssertTrue(app.buttons["lastPhoto"].waitForExistence(timeout: 10))
+        app.buttons["lastPhoto"].tap()
+        XCTAssertTrue(app.images["reviewImage"].waitForExistence(timeout: 5))
+    }
+}
