@@ -78,7 +78,7 @@ struct CameraScreen: View {
         .overlay {
             if let ref = model.references.current, ref.subject != nil || model.references.ghost(ref.id) != nil {
                 GhostOverlay(ghost: model.references.ghost(ref.id), subject: ref.subject, aspect: ref.aspect ?? 0.8,
-                             isReady: model.isReady)
+                             isReady: model.isReady, debugLive: model.debugLiveSubject)
             }
         }
         .overlay(alignment: .top) {

@@ -64,6 +64,9 @@ final class CameraModel {
     private var guideTask: Task<Void, Never>?
     private var guidedReferenceID: UUID?
     private let finder = SubjectFinder()
+    /// Developer builds: the subject found in the live frame (4:5 frame coordinates), drawn in blue.
+    private(set) var debugLiveSubject: Subject?
+    private var lastGuideLog = 0.0
     private var gate = ShutterGate()
     private var isActive = false
 
@@ -110,7 +113,19 @@ final class CameraModel {
         let liveInFrame = live?.cropped(to: CGRect(x: c.x, y: c.y, width: c.w, height: c.h))
         let exampleInFrame = example.placed(in: exampleRegion(exampleAspect: CGFloat(aspect)))
         let raw = CompositionGuide.instruction(live: liveInFrame, example: exampleInFrame)
-        let shown = stabilizer.update(candidate: raw, at: ProcessInfo.processInfo.systemUptime)
+        let now = ProcessInfo.processInfo.systemUptime
+        #if DEBUG
+        debugLiveSubject = liveInFrame
+        if now - lastGuideLog > 1 {
+            lastGuideLog = now
+            func box(_ s: Subject?) -> String {
+                guard let s else { return "none" }
+                return "\(s.kind.rawValue) cx \(String(format: "%.2f", s.box.midX)) cy \(String(format: "%.2f", s.box.midY)) h \(String(format: "%.2f", s.box.height)) joints \(s.pose?.joints.count ?? 0)"
+            }
+            Diagnostics.log("guide: frame \(Int(frame.extent.width))x\(Int(frame.extent.height)) live [\(box(liveInFrame))] example [\(box(exampleInFrame))] raw \(raw?.kind ?? "nil")")
+        }
+        #endif
+        let shown = stabilizer.update(candidate: raw, at: now)
         if shown != guidance { guidance = shown; Diagnostics.log("guidance: \(shown?.kind ?? "ready?")") }
         let ready = shown == nil && raw == nil && live != nil
         if ready && !isReady { readyCount += 1 }

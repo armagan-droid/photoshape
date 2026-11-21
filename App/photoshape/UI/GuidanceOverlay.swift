@@ -9,6 +9,8 @@ struct GhostOverlay: View {
     let subject: Subject?
     let aspect: Double
     let isReady: Bool
+    /// Developer builds only: the live subject, drawn in blue to check detection on the device.
+    var debugLive: Subject? = nil
 
     static let bones: [(Joint, Joint)] = [
         (.neck, .nose), (.leftShoulder, .rightShoulder), (.neck, .root),
@@ -40,6 +42,22 @@ struct GhostOverlay: View {
                         }
                     }
                     .stroke(Color.yellow.opacity(isReady ? 0.25 : 0.8), style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                }
+                if let live = debugLive {
+                    let b = live.box
+                    Rectangle().stroke(Color.cyan.opacity(0.7), lineWidth: 1)
+                        .frame(width: b.width * frame.width, height: b.height * frame.height)
+                        .offset(x: frame.minX + b.minX * frame.width, y: frame.minY + b.minY * frame.height)
+                    if let pose = live.pose {
+                        Path { path in
+                            for (a, c) in Self.bones {
+                                guard let p = pose.joints[a], let q = pose.joints[c] else { continue }
+                                path.move(to: CGPoint(x: frame.minX + p.x * frame.width, y: frame.minY + p.y * frame.height))
+                                path.addLine(to: CGPoint(x: frame.minX + q.x * frame.width, y: frame.minY + q.y * frame.height))
+                            }
+                        }
+                        .stroke(Color.cyan, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                    }
                 }
             }
             .animation(.easeInOut(duration: 0.3), value: isReady)
