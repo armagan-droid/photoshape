@@ -70,9 +70,9 @@ struct CameraScreen: View {
 
     private var preview: some View {
         LookPreview(source: model.backend.latestPreviewImage, look: model.currentLook,
-                    strength: 1, renderer: model.renderer) { point, size in
+                    strength: 1, renderer: model.renderer, onTap: { point, size in
             model.tapToFocus(viewPoint: point, viewSize: size)
-        }
+        }, onHold: model.setComparing)
         .aspectRatio(3.0 / 4.0, contentMode: .fit)
         .overlay { FrameMask().allowsHitTesting(false) }
         .overlay {
@@ -82,11 +82,21 @@ struct CameraScreen: View {
             }
         }
         .overlay(alignment: .top) {
-            if let instruction = model.guidance {
-                GuidanceBanner(instruction: instruction).padding(.top, 34)
-                    .transition(.opacity)
+            // One sentence at a time (Constitution II): comparing > guidance > what the app did.
+            Group {
+                if model.isComparing {
+                    StatusCaption(key: "compare.without").accessibilityIdentifier("comparing")
+                } else if let instruction = model.guidance {
+                    GuidanceBanner(instruction: instruction)
+                } else if let status = model.status {
+                    StatusCaption(key: status.key).accessibilityIdentifier("status")
+                }
             }
+            .padding(.top, 34)
+            .transition(.opacity)
         }
+        .animation(.easeInOut(duration: 0.25), value: model.status)
+        .animation(.easeInOut(duration: 0.15), value: model.isComparing)
         .animation(.easeInOut(duration: 0.25), value: model.guidance)
         .overlay { focusMarker.allowsHitTesting(false) }
         .overlay(alignment: .bottom) {

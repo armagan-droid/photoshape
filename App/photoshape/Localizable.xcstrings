@@ -120,6 +120,23 @@
         }
       }
     },
+    "compare.without": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Without adjustments"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayarlar olmadan"
+          }
+        }
+      }
+    },
     "guide.closer": {
       "extractionState": "manual",
       "localizations": {
@@ -728,6 +745,91 @@
           "stringUnit": {
             "state": "translated",
             "value": "photoshape fotoğrafı"
+          }
+        }
+      }
+    },
+    "status.brightAreasProtected": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Protecting bright areas"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parlak yerler korunuyor"
+          }
+        }
+      }
+    },
+    "status.brightSubjectBalanced": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bright subject balanced"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parlak konu dengelendi"
+          }
+        }
+      }
+    },
+    "status.colorsMatched": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colors matched to your example"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renkler örneğine benzetildi"
+          }
+        }
+      }
+    },
+    "status.lightForPerson": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light set for the person"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Işık kişiye göre ayarlandı"
+          }
+        }
+      }
+    },
+    "status.lightForSubject": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light set for your subject"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Işık konuya göre ayarlandı"
           }
         }
       }

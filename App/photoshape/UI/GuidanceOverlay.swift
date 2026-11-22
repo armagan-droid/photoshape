@@ -96,3 +96,15 @@ struct GuidanceBanner: View {
         }
     }
 }
+
+/// What the app just did, or the comparison label, in plain words (spec 02 FR-010/011).
+struct StatusCaption: View {
+    let key: String
+    var body: some View {
+        Text(LocalizedStringKey(key))
+            .font(.subheadline.weight(.medium))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 12).padding(.vertical, 6)
+            .background(Capsule().fill(.black.opacity(0.5)))
+    }
+}

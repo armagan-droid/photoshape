@@ -3,6 +3,14 @@
 > `/speckit.specify` girdisi. Sürüm: **MVP (v1)**. Bağımlılık: 00 (test seti), 01 (temel kamera), 05 (örnekten çekim hedefleri).
 >
 > **2026-11-21:** Örnek fotoğraf seçildiğinde karar, örneğin hedef parlaklığına ve sıcaklık eğilimine göre önyargı alır (FR-004, spec 05 FR-009). Açık soru 3 bu yönde kapandı: alan MVP'de kullanılır.
+>
+> **2026-11-22 (cihaz denemesi):** Kullanıcı ışık ve pozlamanın ayarlandığını hissetmedi; ölçülen ayar çeyrek kademe kadardı. Bu yüzden: konuya göre ölçme ve parlak alan koruması önce gelir (FR-009), uygulama yaptığı ayarı sade bir cümleyle söyler (FR-010), önizlemeye basılı tutunca ayarsız görüntü gösterilir (FR-011, Constitution 1.3.0).
+
+### Hikâye 7 — Ne yaptığını görür (P1, 2026-11-22)
+
+**Kabul senaryoları**
+1. **Verilen:** uygulama belirgin bir ayar yaptı (ör. ters ışıkta kişiyi aydınlattı). **O zaman:** kısa süre "Işık kişiye göre ayarlandı" gibi bir cümle görünür. Aynı cümle sık tekrarlanmaz.
+2. **Verilen:** kullanıcı önizlemeye basılı tutuyor. **O zaman:** uygulamanın ayarları olmadan görüntü görünür ("Ayarlar olmadan" yazısıyla). Bırakınca ayarlı görüntüye döner.
 
 ## Ne ve neden
 
@@ -76,6 +84,10 @@ Kullanıcı arkası pencereye dönük bir kahveyi çeker.
 - **FR-006:** Kararı uygulayan kamera katmanı, cihazın desteklemediği değerleri sessizce en yakın desteklenen değere sıkıştırır.
 - **FR-007:** Beyin, spec 04'ün kullanacağı ışık durumu sinyalini üretir: `ok`, `dim`, `backlit`, `mixed`.
 - **FR-008:** Bu özelliğin hiçbir kontrolü kullanıcıya gösterilmez (Constitution II).
+- **FR-009 (2026-11-22):** Ölçüm konuya göre yapılır: kişi ya da belirgin nesne varsa pozlama noktası onun üstüne alınır ve parlaklık hedefi konunun parlaklığına göre kurulur. Parlak alan koruması önce gelir: konudaki en parlak bölge beyaza dayanacaksa parlaklık artırılmaz. Örnek varsa örneğin parlaklığı hedefe önyargı olarak eklenir. Kullanıcı dokunarak netleme yaptıysa birkaç saniye onun seçimi geçerlidir.
+- **FR-010 (2026-11-22):** Uygulama belirgin bir ayar yaptığında sade bir cümleyle söyler (Constitution II, 1.3.0): ışığın konuya göre ayarlandığı, parlak yerlerin korunduğu, renklerin örneğe benzetildiği. Cümle kısa süre görünür, aynı cümle en fazla 10 saniyede bir gelir, yönlendirme cümlesiyle aynı anda görünmez.
+- **FR-011 (2026-11-22):** Önizlemeye basılı tutunca renk eşleştirmesi ve parlaklık ayarı kaldırılmış görüntü gösterilir; bırakınca geri gelir. Çekilen fotoğrafı etkilemez.
+- **FR-012 (2026-11-22):** Elde titreme bulanıklığını önlemek için enstantane üst sınırı konur; yetmezse ışık hassasiyeti yükselir (FR-002 öncelik 1).
 
 ## Temel varlıklar
 

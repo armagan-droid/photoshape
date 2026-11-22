@@ -61,7 +61,18 @@ final class CameraModel {
     /// Incremented each time the shot becomes ready (light haptic).
     private(set) var readyCount = 0
     private var stabilizer = GuidanceStabilizer()
-    private var guideTask: Task<Void, Never>?
+    private var analyzeTask: Task<Void, Never>?
+    /// Example's brightness preference in stops, from the color matching (spec 05 FR-009).
+    private var exampleOffset = 0.0
+    private var meteringPoint = CGPoint(x: 0.5, y: 0.5)
+    private var lastExposureReason = ExposureDecider.Reason.none
+    private var lastTapUptime = -Double.infinity
+    private static let tapPriority: TimeInterval = 5
+    private var lastAnnounced: [Status: TimeInterval] = [:]
+    /// Short sentence about what the app just did (spec 02 FR-010), nil most of the time.
+    private(set) var status: Status?
+    /// Held down on the preview: show the scene without the app's adjustments (spec 02 FR-011).
+    private(set) var isComparing = false
     private var guidedReferenceID: UUID?
     private let finder = SubjectFinder()
     /// Developer builds: the subject found in the live frame (4:5 frame coordinates), drawn in blue.
@@ -82,33 +93,63 @@ final class CameraModel {
     /// The look the preview and the saved photo use right now.
     var currentLook: LookRecipe {
         var recipe = LookRecipe.natural
-        recipe.adjustments = adjustments
+        if !isComparing { recipe.adjustments = adjustments }
         return recipe
     }
 
-    // MARK: - Guiding toward the example's framing and pose (spec 04, Kişi ve poz)
+    // MARK: - Scene analysis: smart exposure + guidance (spec 02 FR-009, spec 04)
 
-    private func startGuiding() {
-        guideTask?.cancel()
-        guideTask = Task { [weak self] in
+    private func startAnalyzing() {
+        analyzeTask?.cancel()
+        analyzeTask = Task { [weak self] in
             while !Task.isCancelled {
-                await self?.guideOnce()
+                await self?.analyzeOnce()
                 try? await Task.sleep(for: .milliseconds(250))
             }
         }
     }
 
-    private func guideOnce() async {
-        guard let reference = references.current, let example = reference.subject, let aspect = reference.aspect else {
-            guidance = nil; isReady = false; guidedReferenceID = nil
-            return
-        }
-        if guidedReferenceID != reference.id { stabilizer = GuidanceStabilizer(); guidedReferenceID = reference.id }
+    private func analyzeOnce() async {
         guard let frame = backend.latestPreviewImage() else { return }
         let finder = finder, sampler = sampler
         let (live, grid) = await Task.detached(priority: .utility) { () -> (Subject?, LuminanceGrid?) in
             (finder.detect(frame), sampler.sample(frame)?.luminanceGrid)
         }.value
+        let now = ProcessInfo.processInfo.systemUptime
+        await expose(grid: grid, subject: live, now: now)
+        await guide(live: live, grid: grid, now: now)
+    }
+
+    /// Smart exposure (spec 02 FR-009, FR-012). A recent tap wins for a few seconds; comparing pauses it.
+    private func expose(grid: LuminanceGrid?, subject: Subject?, now: TimeInterval) async {
+        guard let grid, !isComparing, now - lastTapUptime > Self.tapPriority else { return }
+        let decision = ExposureDecider.decide(grid: grid, subject: subject?.box, currentBias: exposureBias, exampleOffset: exampleOffset)
+        if abs(decision.bias - exposureBias) > 0.05 {
+            exposureBias = decision.bias
+            await backend.setExposureBias(decision.bias)
+        }
+        if let point = decision.meteringPoint, hypot(point.x - meteringPoint.x, point.y - meteringPoint.y) > 0.05 {
+            meteringPoint = point
+            await backend.setMeteringPoint(DevicePoint.fromPortraitPreview(point, viewSize: CGSize(width: 1, height: 1)))
+        }
+        if decision.reason != lastExposureReason {
+            lastExposureReason = decision.reason
+            switch decision.reason {
+            case .subjectBrightened: announce(subject?.kind == .person ? .lightForPerson : .lightForSubject)
+            case .subjectDarkened: announce(.brightSubjectBalanced)
+            case .highlightsProtected: announce(.brightAreasProtected)
+            case .none: break
+            }
+        }
+    }
+
+    /// Guidance toward the example's framing, pose and light (spec 04).
+    private func guide(live: Subject?, grid: LuminanceGrid?, now: TimeInterval) async {
+        guard let reference = references.current, let example = reference.subject, let aspect = reference.aspect else {
+            guidance = nil; isReady = false; guidedReferenceID = nil; debugLiveSubject = nil
+            return
+        }
+        if guidedReferenceID != reference.id { stabilizer = GuidanceStabilizer(); guidedReferenceID = reference.id }
         let liveLight = live.flatMap { subject in grid.flatMap { LightAnalyzer.read($0, subject: subject.box) } }
         let light = CompositionGuide.LightContext(live: liveLight, example: reference.light, isDim: await backend.isLowLight())
 
@@ -117,7 +158,6 @@ final class CameraModel {
         let liveInFrame = live?.cropped(to: CGRect(x: c.x, y: c.y, width: c.w, height: c.h))
         let exampleInFrame = example.placed(in: exampleRegion(exampleAspect: CGFloat(aspect)))
         let raw = CompositionGuide.instruction(live: liveInFrame, example: exampleInFrame, light: light)
-        let now = ProcessInfo.processInfo.systemUptime
         #if DEBUG
         debugLiveSubject = liveInFrame
         if now - lastGuideLog > 1 {
@@ -127,7 +167,7 @@ final class CameraModel {
                 return "\(s.kind.rawValue) cx \(String(format: "%.2f", s.box.midX)) cy \(String(format: "%.2f", s.box.midY)) h \(String(format: "%.2f", s.box.height)) joints \(s.pose?.joints.count ?? 0)"
             }
             let lightText = liveLight.map { String(format: "s/bg %.2f side %.2f", $0.subjectToBackground, $0.sideBalance) } ?? "-"
-            Diagnostics.log("guide: live [\(box(liveInFrame))] example [\(box(exampleInFrame))] light [\(lightText) dim \(light.isDim)] raw \(raw?.kind ?? "nil")")
+            Diagnostics.log("guide: live [\(box(liveInFrame))] example [\(box(exampleInFrame))] light [\(lightText) dim \(light.isDim)] bias \(String(format: "%.2f", exposureBias)) raw \(raw?.kind ?? "nil")")
         }
         #endif
         let shown = stabilizer.update(candidate: raw, at: now)
@@ -137,7 +177,37 @@ final class CameraModel {
         isReady = ready
     }
 
-    // MARK: - Matching the example (spec 05 FR-009/010, spec 02 FR-004)
+    // MARK: - Saying what the app did (spec 02 FR-010)
+
+    enum Status: String {
+        case lightForPerson, lightForSubject, brightSubjectBalanced, brightAreasProtected, colorsMatched
+        var key: String { "status.\(rawValue)" }
+    }
+
+    private func announce(_ status: Status) {
+        let now = ProcessInfo.processInfo.systemUptime
+        guard now - (lastAnnounced[status] ?? -.infinity) > 10 else { return }
+        lastAnnounced[status] = now
+        self.status = status
+        Diagnostics.log("status: \(status.rawValue)")
+        Task {
+            try? await Task.sleep(for: .seconds(2.5))
+            if self.status == status { self.status = nil }
+        }
+    }
+
+    // MARK: - Before / after (spec 02 FR-011)
+
+    func setComparing(_ on: Bool) {
+        guard on != isComparing else { return }
+        isComparing = on
+        Task {
+            // Without the app: no color matching (see `currentLook`) and the camera's own exposure.
+            await backend.setExposureBias(on ? 0 : exposureBias)
+        }
+    }
+
+    // MARK: - Matching the example's colors (spec 05 FR-009/010)
 
     private func startMatching() {
         matchTask?.cancel()
@@ -152,31 +222,25 @@ final class CameraModel {
     private func matchOnce() async {
         guard entitlements.isAvailable(.exampleMatching), let reference = references.current else {
             matchedReferenceID = nil
+            exampleOffset = 0
             if adjustments != .zero { adjustments = .zero }
-            if exposureBias != 0 { exposureBias = 0; await backend.setExposureBias(0) }
             return
         }
         guard let frame = backend.latestPreviewImage() else { return }
         let sampler = sampler, profile = reference.profile
-        guard let (result, highlights) = await Task.detached(priority: .utility, operation: { () -> (LookMatcher.Result, Double)? in
-            guard let sample = sampler.sample(frame) else { return nil }
-            return (LookMatcher.match(scene: sample, to: profile), ColorStats(colors: sample.colors).highL)
+        guard let result = await Task.detached(priority: .utility, operation: {
+            sampler.sample(frame).map { LookMatcher.match(scene: $0, to: profile) }
         }).value else { return }
 
-        // The camera takes over the brightness difference step by step; the look covers what is left.
-        // Bright parts are protected first (spec 02 FR-002): no brighter once they are near white.
-        var step = 0.5 * result.exposureStops
-        if step > 0, highlights > 94 { step = 0 }
-        let bias = min(1.0, max(-1.5, exposureBias + step))
-        if abs(bias - exposureBias) > 0.05 {
-            exposureBias = bias
-            await backend.setExposureBias(bias)
-        }
-        // A new example applies at once; after that, changes are eased so the preview does not flicker.
+        // Brightness belongs to the camera (smart exposure takes it as a preference); the look keeps the rest.
+        exampleOffset = result.exposureStops
+        var target = result.adjustments
+        target.exposure = 0
         let isNew = matchedReferenceID != reference.id
         matchedReferenceID = reference.id
-        adjustments = isNew ? result.adjustments : adjustments.blended(toward: result.adjustments, by: 0.4)
-        Diagnostics.log("match: bias \(String(format: "%.2f", bias)) temp \(String(format: "%.2f", adjustments.temperature)) sat \(String(format: "%.2f", adjustments.saturation))")
+        adjustments = isNew ? target : adjustments.blended(toward: target, by: 0.4)
+        if isNew, target.colorChange > 0.15 { announce(.colorsMatched) }
+        Diagnostics.log("match: offset \(String(format: "%.2f", exampleOffset)) temp \(String(format: "%.2f", adjustments.temperature)) sat \(String(format: "%.2f", adjustments.saturation))")
     }
 
     func activate() async {
@@ -186,7 +250,7 @@ final class CameraModel {
         guard access == .authorized else { return }
         lensOptions = await backend.start()
         startMatching()
-        startGuiding()
+        startAnalyzing()
         if let option = lensOptions.first(where: { $0.kind == selectedLens }) { await backend.select(option) }
     }
 
@@ -194,7 +258,7 @@ final class CameraModel {
         guard isActive else { return }
         isActive = false
         matchTask?.cancel()
-        guideTask?.cancel()
+        analyzeTask?.cancel()
         await backend.stop()
     }
 
@@ -207,6 +271,7 @@ final class CameraModel {
     func tapToFocus(viewPoint: CGPoint, viewSize: CGSize) {
         let devicePoint = DevicePoint.fromPortraitPreview(viewPoint, viewSize: viewSize)
         Diagnostics.log("tap at view \(viewPoint) in \(viewSize) → device \(devicePoint)")
+        lastTapUptime = ProcessInfo.processInfo.systemUptime
         focusMarker = FocusMarker(location: viewPoint)
         let marker = focusMarker
         Task {
@@ -297,6 +362,11 @@ private extension LookAdjustments {
         r.saturation = mix(saturation, t.saturation); r.vibrance = mix(vibrance, t.vibrance)
         r.vignette = mix(vignette, t.vignette); r.grain = mix(grain, t.grain)
         return r
+    }
+
+    /// Rough size of the color change, for deciding whether it is worth mentioning.
+    var colorChange: Double {
+        [abs(temperature), abs(tint), abs(saturation), abs(contrast), fade, vignette].max() ?? 0
     }
 }
 

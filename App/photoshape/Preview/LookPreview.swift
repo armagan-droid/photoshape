@@ -12,6 +12,8 @@ struct LookPreview: UIViewRepresentable {
     let renderer: LookRenderer
     /// View point, for tap to focus.
     let onTap: (CGPoint, CGSize) -> Void
+    /// Press and hold: compare without the app's adjustments (spec 02 FR-011).
+    var onHold: (Bool) -> Void = { _ in }
 
     func makeCoordinator() -> Coordinator { Coordinator(renderer: renderer) }
 
@@ -23,7 +25,12 @@ struct LookPreview: UIViewRepresentable {
         view.autoResizeDrawable = true
         view.backgroundColor = .black
         view.delegate = context.coordinator
-        view.addGestureRecognizer(UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tapped)))
+        let hold = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.held))
+        hold.minimumPressDuration = 0.3
+        let tap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tapped))
+        tap.require(toFail: hold)
+        view.addGestureRecognizer(hold)
+        view.addGestureRecognizer(tap)
         view.accessibilityIdentifier = "preview"
         view.isAccessibilityElement = true
         return view
@@ -31,6 +38,7 @@ struct LookPreview: UIViewRepresentable {
 
     func updateUIView(_ view: MTKView, context: Context) {
         context.coordinator.update(source: source, look: look, strength: strength, onTap: onTap)
+        context.coordinator.onHold = onHold
     }
 
     final class Coordinator: NSObject, MTKViewDelegate {
@@ -43,6 +51,15 @@ struct LookPreview: UIViewRepresentable {
         private var look = LookRecipe.natural
         private var strength = 0.0
         private var onTap: (CGPoint, CGSize) -> Void = { _, _ in }
+        var onHold: (Bool) -> Void = { _ in }
+
+        @MainActor @objc func held(_ recognizer: UILongPressGestureRecognizer) {
+            switch recognizer.state {
+            case .began: onHold(true)
+            case .ended, .cancelled, .failed: onHold(false)
+            default: break
+            }
+        }
 
         init(renderer: LookRenderer) {
             self.renderer = renderer

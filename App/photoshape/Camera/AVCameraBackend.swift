@@ -68,6 +68,16 @@ final class AVCameraBackend: NSObject, CameraBackend, @unchecked Sendable {
         }
     }
 
+    func setMeteringPoint(_ point: CGPoint) async {
+        await onQueue {
+            self.withLockedDevice { device in
+                guard device.isExposurePointOfInterestSupported, device.isExposureModeSupported(.continuousAutoExposure) else { return }
+                device.exposurePointOfInterest = point
+                device.exposureMode = .continuousAutoExposure
+            }
+        }
+    }
+
     func isLowLight() async -> Bool {
         await onQueue {
             guard let device = self.device else { return false }
@@ -183,6 +193,11 @@ final class AVCameraBackend: NSObject, CameraBackend, @unchecked Sendable {
                 device.videoZoomFactor = CGFloat(normal.zoomFactor)
             }
             self.resetFocus(device)
+            // Handheld: no slower than 1/30 s; auto exposure raises sensitivity instead (spec 02 FR-012, SC-007).
+            let limit = CMTime(value: 1, timescale: 30)
+            if device.activeFormat.maxExposureDuration > limit, device.activeFormat.minExposureDuration <= limit {
+                device.activeMaxExposureDuration = limit
+            }
         }
         observe(device)
         applyThermalState()
