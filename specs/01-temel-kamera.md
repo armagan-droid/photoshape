@@ -68,7 +68,7 @@ Kullanıcı "geniş / normal / yakın" düğmelerinden birine dokunur.
 - **FR-005:** Kaydedilen düzenleme kaydı, uygulamanın kendi tanımlayıcısını ve sürümünü taşır. Spec 03'teki görünüm bilgisi de ileride bu kayda eklenebilmelidir.
 - **FR-006:** Kaydedilen fotoğrafa konum eklenmez (Constitution I).
 - **FR-007:** Cihazda olmayan lensin düğmesi gösterilmez ya da en yakın karşılıkla çalışır. Kullanıcı hiçbir durumda "bu lens yok" hatası görmez.
-- **FR-008:** Arayüzde hiçbir sayı, birim ya da teknik terim yoktur (Constitution II).
+- **FR-008:** Arayüzde hiçbir sayı, birim ya da teknik terim yoktur (Constitution II). **2026-11-23:** Constitution 2.0.0 bu yasağı kaldırdı; lens düğmelerinin "geniş / normal / yakın" adları tasarım kararı olarak kalıyor.
 - **FR-009:** Tüm metinler Türkçe ve İngilizcedir. Dil, cihaz diline göre seçilir.
 - **FR-010:** Kamera bağlantısı, Constitution'daki ortak katman sınırına uygun bir "kare kaynağı" arayüzü üzerinden diğer katmanlara kare verir. Beyin katmanı kameraya doğrudan bağlanmaz.
 - **FR-012:** Uygulama içinde geri alma ya da galeri yoktur (karar 4; tam kütüphane izni gerektirir, Constitution I). Geri almanın Fotoğraflar'da yapılabildiği kullanıcıya Hikâye 4.3'teki notla anlatılır. Fotoğraflar'ı belirli bir fotoğrafta açan herkese açık bir iOS yöntemi olmadığı için yönlendirme metinle yapılır.

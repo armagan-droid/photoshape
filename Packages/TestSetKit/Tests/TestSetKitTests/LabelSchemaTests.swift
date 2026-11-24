@@ -27,6 +27,19 @@ struct LabelSchemaTests {
         #expect(labels.notes == "fincan pencere önünde")
     }
 
+    /// 2026-11-23: optional angle and light labels (spec 05 SC-007..SC-009); old files without them still parse.
+    @Test func angleAndLightLabelsAreOptional() throws {
+        let plain = try validate(FixtureSet.labels(id: "IMG_0001", [:])).get()
+        #expect(plain.cameraAngle == nil && plain.lightDirection == nil && plain.lightQuality == nil)
+        let labeled = try validate(FixtureSet.labels(id: "IMG_0001", [
+            "camera_angle": "top_down", "light_direction": "left", "light_quality": "soft",
+        ])).get()
+        #expect(labeled.cameraAngle == .topDown)
+        #expect(labeled.lightDirection == .left)
+        #expect(labeled.lightQuality == .soft)
+        #expect(fields(validate(FixtureSet.labels(id: "IMG_0001", ["camera_angle": "low"]))) == ["camera_angle"])
+    }
+
     @Test func missingRequiredFieldsAreAllReported() {
         let result = validate(FixtureSet.labels(id: "IMG_0001", ["exposure": nil, "sharpness": nil]))
         #expect(fields(result) == ["exposure", "sharpness"])

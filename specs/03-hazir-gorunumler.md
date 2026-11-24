@@ -106,7 +106,7 @@ Tarif bir veridir; nasıl uygulanacağı plan aşamasında belirlenir. Tarifin t
 - **FR-004:** MVP, kafe/yemek kategorisi için 4–5 hazır görünümle ve bir "Doğal" seçeneğiyle çıkar. Görünümler uygulamayla birlikte gelir; ağ gerekmez.
 - **FR-005:** Kaydedilen fotoğrafın düzenleme kaydı; tarif kimliğini, tarif sürümünü, görünüm gücünü ve kırpma bilgisini içerir. Fotoğraflar'da "Geri Al" orijinali getirir (spec 01 FR-004).
 - **FR-006:** Görünüm seçim ekranı ile kamera aynı ekrandır. Kullanıcı ayrı bir "filtre ekranı"na gitmez.
-- **FR-007:** Görünüm adları ve açıklamaları iki dildedir. Teknik terim içermez.
+- **FR-007:** Görünüm adları ve açıklamaları iki dildedir. Teknik terim içermez (2026-11-23: Constitution 2.0.0'dan beri zorunlu değil, tercih).
 - **FR-008:** Bir görünümün kullanılabilir olup olmadığı yalnızca erişim hakkı soyutlamasına sorulur (Constitution VII). MVP uygulaması "her şey açık" yanıtını verir.
 - **FR-009:** Lisans kaydı olmayan bir örnek görsel derlemeye giremez. Derleme sırasında bu kontrol edilir.
 - **FR-010:** Geliştirici ekranı yalnızca geliştirici derlemesinde bulunur. Dışa aktarılan dosya, uygulamaya eklenen tarif dosyasıyla aynı formattadır.

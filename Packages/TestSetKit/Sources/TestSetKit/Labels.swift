@@ -57,6 +57,19 @@ public enum CompositionIssue: String, LabelValue {
 
 public enum PeopleVisible: String, LabelValue { case none, hands, faces }
 
+/// Optional (2026-11-23): where the camera looks from. Spec 05 SC-007.
+public enum CameraAngle: String, LabelValue {
+    case topDown = "top_down"
+    case angled
+    case eyeLevel = "eye_level"
+}
+
+/// Optional (2026-11-23): where light reaches the subject from, as seen by the photographer. Spec 05 SC-008.
+public enum LightDirection: String, LabelValue { case left, right, front, back, top, diffuse }
+
+/// Optional (2026-11-23): soft or hard shadow edges. Spec 05 SC-009.
+public enum LightQuality: String, LabelValue { case soft, hard }
+
 public struct FrameLabels: Sendable, Hashable {
     public var id: String
     public var category: Category
@@ -76,6 +89,9 @@ public struct FrameLabels: Sendable, Hashable {
     public var neutralRegions: [Region]
     public var pairID: String?
     public var notes: String?
+    public var cameraAngle: CameraAngle?
+    public var lightDirection: LightDirection?
+    public var lightQuality: LightQuality?
 }
 
 /// A rectangle in normalized image coordinates: 0–1, origin top-left, in the orientation the

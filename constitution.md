@@ -24,9 +24,9 @@ Fotoğraftan anlamayan, Instagram için güzel fotoğraf çekmek isteyen insanla
 
 **Gerekçe:** Pazarlama vaadi ("abonelik zorunlu değil, fotoğrafların telefonundan çıkmıyor") ve sunucu maliyetinin sıfır olması, ömür boyu lisansı sürdürülebilir kılar.
 
-### II. Kullanıcı hiçbir teknik ayar görmez
+### II. Kullanıcı hiçbir teknik ayar yapmaz
 
-- Arayüzün hiçbir yerinde teknik sayı, birim ya da fotoğrafçılık terimi gösterilmez: ISO, enstantane, EV, Kelvin, f/, "pozlama", "beyaz dengesi", "histogram" gibi. Fiyat ve tarih gibi teknik olmayan bilgiler bu kuralın dışındadır.
+- Teknik sayılar, birimler ve fotoğrafçılık terimleri (ISO, enstantane, f/, Kelvin, "pozlama", "yan ışık" gibi) bilgi olarak gösterilebilir (2.0.0). Kullanıcı bunları ayarlamaz: bir değeri değiştiren kontrol ancak aşağıdaki kapalı listede varsa bulunur. Hedef kullanıcı fotoğraftan anlamayan biri olduğu için yönlendirme cümleleri yine kısa ve anlaşılır yazılır (VI).
 - Arayüz öğeleri iki gruptadır. Ayrım ekrana göre değil, öğenin etkisine göre yapılır:
   - **Çekim kontrolleri (kapalı liste):** Fotoğrafın nasıl çekildiğini, nasıl göründüğünü ya da kamera ekranının nasıl davrandığını değiştiren her kontrol ve kalıcı ayar bu gruptadır, hangi ekranda olursa olsun. Tam liste:
     - lens düğmeleri ("geniş / normal / yakın"),
@@ -40,7 +40,8 @@ Fotoğraftan anlamayan, Instagram için güzel fotoğraf çekmek isteyen insanla
   - Ayrım ölçütü: Öğe, sonraki çekimlerin sonucunu ya da kamera ekranının davranışını değiştiriyorsa çekim kontrolüdür. Var olan bir sonucu kullanıyor ya da yalnızca bir yere götürüyorsa eylem öğesidir.
 - Yönlendirmeler ok ve kısa cümleyle verilir: "biraz geri çekil", "telefonu düz tut", "pencereye yaklaş".
 - Örnek fotoğraf seçiliyse, örneğin yarı saydam **taslağı** canlı görüntünün üstünde gösterilir: kenar çizgileri ve örnekte kişi varsa iskelet çizgisi. Taslak bir kontrol değildir, kullanıcı onu ayarlamaz. Aynı anda yine yalnızca bir cümle ve bir ok görünür.
-- Uygulama yaptığı belirgin bir ayarı sade bir cümleyle söyleyebilir: "ışık kişiye göre ayarlandı", "renkler örneğine benzetildi". Bu cümlede de sayı ve teknik terim yoktur. Yönlendirme cümlesiyle aynı anda görünmez.
+- Uygulama yaptığı belirgin bir ayarı sade bir cümleyle söyleyebilir: "ışık kişiye göre ayarlandı", "renkler örneğine benzetildi". Yönlendirme cümlesiyle aynı anda görünmez.
+- **Örneğin tarifi kartı (bilgi ve eylem öğesi):** Örnek seçildiğinde uygulama, örnekten ne okuduğunu ("bu fotoğraf nasıl çekilmiş?") sade cümlelerle bir kartta anlatır: ışığın nereden geldiği ve karakteri, aydınlık, renk, çekim açısı, konunun yeri ve boyu. Kartın altında kullanıcının bu fotoğrafı çekmek için yapacakları 2–3 madde olarak yazar. Kart bir çekim kontrolü değildir: çekimi ve kamera ekranının davranışını değiştirmez, yalnızca bilgi verir ve örneği değiştirmeye götürebilir. Uygulamanın emin olmadığı bir okuma kartta gösterilmez; yerine hata ya da "bilinmiyor" yazılmaz. Kart açıkken kamera ekranındaki yönlendirme ve durum cümleleri görünmez.
 - Uygulamanın teknik bir kararı yapamadığı durumlarda (örneğin derinlik verisi yoksa bulanıklığın atlanması) kullanıcıya hata gösterilmez. Uygulama sessizce en iyi alternatifi uygular.
 - Geliştirici ekranları bu ilkeden muaftır, ancak yalnızca geliştirici derlemelerinde bulunur, App Store sürümüne girmez.
 
@@ -150,8 +151,11 @@ Geliştirici, aynı anda GymSpot (Muay Thai için kamerayla eskiv ve form koçlu
   - II: Yönlendirmeye örneğin yarı saydam taslağı eklendi (spec 04, 2026-11-21 yön değişikliği). Yeni bir kontrol eklenmedi.
 - **1.1.2 (2026-11-21):**
   - II: "Görünüm gücü" kaydırıcısının değeri görünüm başına hatırlanır (spec 03 karar 3). Kontrol listesi değişmedi.
+- **2.0.0 (2026-11-23, MAJOR):**
+  - II: Teknik sayı ve terim yasağı kaldırıldı (geliştiricinin kararı). İlkenin adı "Kullanıcı hiçbir teknik ayar görmez" iken "Kullanıcı hiçbir teknik ayar yapmaz" oldu. Çekim kontrolleri kapalı listesi değişmedi: değerler gösterilebilir, ama kullanıcıya ayarlatılmaz. Yönlendirme cümlelerinin kelime sınırı (VI) aynen geçerli. Kameranın gerçek değerlerini gösteren bir "Ayrıntılar" bölümü artık ilkeye aykırı değil; ama kendi spec'i yazılmadan eklenmez.
+  - II: "Örneğin tarifi kartı" bir bilgi ve eylem öğesi olarak eklendi (spec 05 Hikâye 7). **Gerekçe:** Uygulama örnekten parlaklığı, rengi, ışığı ve konuyu zaten çıkarıp kamerayı buna göre ayarlıyor, ama kullanıcı bunu görmüyor; cihaz denemesinde ayarlar hissedilmedi (spec 02, 2026-11-22). "Bu fotoğraf nasıl çekilmiş?" sorusunun cevabı ürünün asıl değeridir. Kart çekimi değiştirmediği için çekim kontrolleri listesi değişmedi.
 
-**Version**: 1.3.0 | **Ratified**: 2026-11-19 | **Last Amended**: 2026-11-22
+**Version**: 2.0.0 | **Ratified**: 2026-11-19 | **Last Amended**: 2026-11-23
 
 ## Açık sorular
 

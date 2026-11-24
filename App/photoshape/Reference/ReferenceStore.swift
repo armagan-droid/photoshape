@@ -16,8 +16,21 @@ final class ReferenceStore {
         var subject: Subject?
         /// Width / height of the example, to fit it into the 4:5 frame.
         var aspect: Double?
-        /// How the example's subject is lit (spec 04 FR-L1).
+        /// How the example's subject is lit (spec 04 FR-L1, spec 05 FR-013). The card and the live advice use
+        /// this same reading, so they cannot disagree.
         var light: LightReading?
+        /// Where the example was shot from (spec 05 FR-012). Nil when unsure or saved before 2026-11-23.
+        var angle: ShotAngleEstimate?
+        /// Shutter, aperture, ISO… from the photo's own camera data (spec 05 Hikâye 8). Nil for screenshots.
+        var settings: ExampleSettings?
+
+        /// Approximate values read from the picture (spec 05 FR-020).
+        var measurements: ExampleMeasurements { ExampleMeasurements(stats: profile.stats) }
+
+        /// The "how was this shot" card (spec 05 Hikâye 7); computed from what is stored (FR-017).
+        var reading: ExampleReading {
+            ExampleReading(tone: profile.stats, isMonochrome: profile.isMonochrome, subject: subject, light: light, angle: angle)
+        }
     }
 
     private(set) var references: [Reference] = []
@@ -27,6 +40,9 @@ final class ReferenceStore {
     private(set) var failedToRead = false
     /// "Örneksiz çek" for this session: the prompt is not shown again until the next launch.
     var skippedPrompt = false
+    /// Incremented each time the user picks an example (new or from the list), not at launch: opens the card
+    /// (spec 05 Hikâye 7.1).
+    private(set) var selectionCount = 0
 
     private let directory: URL
     private let defaults: UserDefaults
@@ -54,6 +70,7 @@ final class ReferenceStore {
     func select(_ id: UUID?) {
         currentID = id
         defaults.set(id?.uuidString, forKey: Keys.current)
+        if id != nil { selectionCount += 1 }
     }
 
     /// "Örneksiz çek" from the examples list: back to the plain camera, not to the first-launch prompt.
@@ -97,21 +114,26 @@ final class ReferenceStore {
                   let thumb = Self.upright(imageData, maxSide: 300).flatMap({ UIImage(cgImage: $0).jpegData(compressionQuality: 0.85) })
             else { return nil }
             let subject = SubjectDetector.detect(in: upright)
-            return Analysis(profile: ReferenceProfile(sample: sample), subject: subject,
-                            light: subject.flatMap { LightAnalyzer.read(sample.luminanceGrid, subject: $0.box) },
+            // Finer grid for the card's light character (spec 05 FR-013); the middle stands in without a subject.
+            let light = LuminanceGrid(image: upright).flatMap { LightAnalyzer.readExample($0, subject: subject?.box) }
+            return Analysis(profile: ReferenceProfile(sample: sample), subject: subject, light: light,
+                            angle: ShotAngleEstimator.estimate(in: upright),
+                            settings: Self.cameraData(imageData),
                             aspect: Double(upright.width) / Double(max(upright.height, 1)),
                             thumbnail: thumb, ghost: Self.outline(of: upright))
         }.value
         guard let result else { failedToRead = true; return }
         let reference = Reference(id: UUID(), created: Date(), profile: result.profile, subject: result.subject,
-                                  aspect: result.aspect, light: result.light)
+                                  aspect: result.aspect, light: result.light, angle: result.angle, settings: result.settings)
         try? result.thumbnail.write(to: thumbnailURL(reference.id))
         try? result.ghost?.write(to: ghostURL(reference.id))
         let profile = result.profile
         references.insert(reference, at: 0)
         saveIndex()
         select(reference.id)
-        Diagnostics.log("reference added: meanL \(profile.stats.meanL), chroma \(profile.stats.meanChroma), subject \(result.subject?.kind.rawValue ?? "none")")
+        Diagnostics.log("reference added: meanL \(profile.stats.meanL), chroma \(profile.stats.meanChroma), neutralB \(profile.stats.neutralB ?? .nan), subject \(result.subject?.kind.rawValue ?? "none"), angle \(String(describing: result.angle)), light \(String(describing: result.light))")
+        Diagnostics.log("settings: \(String(describing: result.settings))")
+        Diagnostics.log("reading: \(reference.reading.lines.flatMap(\.phraseKeys)) steps \(reference.reading.steps)")
     }
 
     // MARK: - Files
@@ -124,6 +146,8 @@ final class ReferenceStore {
         let profile: ReferenceProfile
         let subject: Subject?
         let light: LightReading?
+        let angle: ShotAngleEstimate?
+        let settings: ExampleSettings?
         let aspect: Double
         let thumbnail: Data
         let ghost: Data?
@@ -147,6 +171,13 @@ final class ReferenceStore {
 
     private func saveIndex() {
         if let data = try? JSONEncoder().encode(references) { try? data.write(to: indexURL, options: .atomic) }
+    }
+
+    /// Shooting values from the file's camera data; only `ExampleSettings` fields are read (spec 05 FR-019).
+    nonisolated static func cameraData(_ data: Data) -> ExampleSettings? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any] else { return nil }
+        return ExampleSettings(properties: props)
     }
 
     /// Decodes with EXIF orientation applied and the long side limited.

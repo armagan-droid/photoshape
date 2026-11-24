@@ -42,6 +42,8 @@ final class CameraModel {
     private(set) var shutterCount = 0
     var reviewing: LastCapture?
     var showingReferences = false
+    /// The example card is open (spec 05 Hikâye 7): camera sentences wait until it closes (7.5).
+    var showingCard = false
     /// Color adjustments that make the current scene look like the example (spec 05 FR-010); zero without one.
     private(set) var adjustments = LookAdjustments.zero
 
@@ -51,7 +53,10 @@ final class CameraModel {
     let renderer = LookRenderer()
     private let sampler = FrameSampler()
     private var matchTask: Task<Void, Never>?
-    private var exposureBias = 0.0
+    /// Brightness the app asks of the camera, in stops (spec 02 FR-009); shown on the example card (spec 05 Hikâye 8.5).
+    private(set) var exposureBias = 0.0
+    /// The camera's own values, refreshed while the example card is open.
+    private(set) var liveExposure: LiveExposure?
     private var matchedReferenceID: UUID?
 
     /// The one instruction on screen (spec 04 FR-K4), nil when there is nothing to correct.
@@ -116,6 +121,10 @@ final class CameraModel {
             (finder.detect(frame), sampler.sample(frame)?.luminanceGrid)
         }.value
         let now = ProcessInfo.processInfo.systemUptime
+        if showingCard {
+            let values = await backend.currentExposure()
+            if values != liveExposure { liveExposure = values }
+        }
         await expose(grid: grid, subject: live, now: now)
         await guide(live: live, grid: grid, now: now)
     }
@@ -185,6 +194,7 @@ final class CameraModel {
     }
 
     private func announce(_ status: Status) {
+        guard !showingCard else { return }
         let now = ProcessInfo.processInfo.systemUptime
         guard now - (lastAnnounced[status] ?? -.infinity) > 10 else { return }
         lastAnnounced[status] = now

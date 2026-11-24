@@ -61,6 +61,12 @@ public enum LabelSchema {
         Field(key: "pair_id", kind: .string, requirement: .optional,
               summary: "Links attempts of the same scene (e.g. good and badly exposed)"),
         Field(key: "notes", kind: .string, requirement: .optional, summary: "Free text"),
+        Field(key: "camera_angle", kind: .oneOf(values(CameraAngle.self)), requirement: .optional,
+              summary: "Where the camera looks from (spec 05 SC-007)"),
+        Field(key: "light_direction", kind: .oneOf(values(LightDirection.self)), requirement: .optional,
+              summary: "Where light reaches the subject from, photographer's view (spec 05 SC-008)"),
+        Field(key: "light_quality", kind: .oneOf(values(LightQuality.self)), requirement: .optional,
+              summary: "Soft or hard shadow edges (spec 05 SC-009)"),
     ]
 
     /// Read from the image file (FR-005); writing them by hand is an error.
@@ -124,7 +130,10 @@ public enum LabelSchema {
             subjectRegion: dict["subject_region"].map { region(from: $0)! },
             neutralRegions: (dict["neutral_region"] as? [Any])?.map { region(from: $0)! } ?? [],
             pairID: dict["pair_id"] as? String,
-            notes: dict["notes"] as? String
+            notes: dict["notes"] as? String,
+            cameraAngle: (dict["camera_angle"] as? String).flatMap(CameraAngle.init(rawValue:)),
+            lightDirection: (dict["light_direction"] as? String).flatMap(LightDirection.init(rawValue:)),
+            lightQuality: (dict["light_quality"] as? String).flatMap(LightQuality.init(rawValue:))
         )
         return .success(labels)
     }

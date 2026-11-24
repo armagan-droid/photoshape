@@ -1,4 +1,5 @@
 import CaptureKit
+import ImageIO
 import LookKit
 import SwiftUI
 
@@ -8,6 +9,9 @@ struct CameraScreen: View {
     @Bindable var model: CameraModel
     @Environment(\.scenePhase) private var scenePhase
     @State private var flash = false
+    /// Sheet hand-offs: the card opens Örneklerim, and a pick in Örneklerim opens the card (spec 05 Hikâye 7).
+    @State private var referencesAfterCard = false
+    @State private var cardAfterReferences = false
 
     var body: some View {
         ZStack {
@@ -24,7 +28,26 @@ struct CameraScreen: View {
             await injectTestReferenceIfAsked()
             await model.activate()
         }
-        .sheet(isPresented: $model.showingReferences) { ReferencesSheet(store: model.references) }
+        .sheet(isPresented: $model.showingReferences, onDismiss: {
+            if cardAfterReferences { cardAfterReferences = false; if model.references.current != nil { model.showingCard = true } }
+        }) { ReferencesSheet(store: model.references) }
+        .sheet(isPresented: $model.showingCard, onDismiss: {
+            if referencesAfterCard { referencesAfterCard = false; model.showingReferences = true }
+        }) {
+            if let reference = model.references.current {
+                ExampleCardView(store: model.references, reference: reference, change: {
+                    referencesAfterCard = true
+                    model.showingCard = false
+                }, shootWithout: {
+                    model.references.shootWithoutExample()
+                    model.showingCard = false
+                }, live: model.liveExposure, appBias: model.exposureBias, lensKey: "lens.\(model.selectedLens.rawValue)")
+            }
+        }
+        // Every pick opens the card, not the launch with the last example (spec 05 Hikâye 7.1).
+        .onChange(of: model.references.selectionCount) {
+            if model.showingReferences { cardAfterReferences = true } else { model.showingCard = true }
+        }
         .onChange(of: scenePhase) { _, phase in
             Task {
                 if phase == .active { await model.activate() } else if phase == .background { await model.deactivate() }
@@ -46,7 +69,10 @@ struct CameraScreen: View {
 
     private var camera: some View {
         VStack(spacing: 0) {
-            ReferenceChip(store: model.references) { model.showingReferences = true }
+            // With an example the icon opens its card; without one, Örneklerim (spec 05 Hikâye 0.2, 7.2).
+            ReferenceChip(store: model.references) {
+                if model.references.current != nil { model.showingCard = true } else { model.showingReferences = true }
+            }
                 .frame(minHeight: 44)
                 .padding(.bottom, 6)
             preview
@@ -63,10 +89,30 @@ struct CameraScreen: View {
         #if DEBUG
         guard let name = UserDefaults.standard.string(forKey: "UITestReference"),
               let dir = try? LookCatalog.bundled().directory,
-              let data = try? Data(contentsOf: dir.appendingPathComponent(name)) else { return }
+              var data = try? Data(contentsOf: dir.appendingPathComponent(name)) else { return }
+        // `-UITestReferenceCameraData YES`: the sample gets iPhone-like camera data (spec 05 Hikâye 8.1).
+        if UserDefaults.standard.bool(forKey: "UITestReferenceCameraData") { data = Self.withTestCameraData(data) }
         await model.references.add(imageData: data)
         #endif
     }
+
+    #if DEBUG
+    private static func withTestCameraData(_ data: Data) -> Data {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return data }
+        let out = NSMutableData()
+        guard let dest = CGImageDestinationCreateWithData(out, "public.jpeg" as CFString, 1, nil) else { return data }
+        let exif: [String: Any] = [
+            kCGImagePropertyExifExposureTime as String: 1.0 / 125, kCGImagePropertyExifFNumber as String: 1.78,
+            kCGImagePropertyExifISOSpeedRatings as String: [64], kCGImagePropertyExifFocalLength as String: 6.86,
+            kCGImagePropertyExifFocalLenIn35mmFilm as String: 24, kCGImagePropertyExifExposureBiasValue as String: -0.7,
+            kCGImagePropertyExifFlash as String: 16,
+        ]
+        CGImageDestinationAddImage(dest, image, [kCGImagePropertyExifDictionary as String: exif,
+                                                 kCGImagePropertyTIFFDictionary as String: [kCGImagePropertyTIFFModel as String: "iPhone 15 Pro"]] as CFDictionary)
+        return CGImageDestinationFinalize(dest) ? out as Data : data
+    }
+    #endif
 
     private var preview: some View {
         LookPreview(source: model.backend.latestPreviewImage, look: model.currentLook,
@@ -84,7 +130,9 @@ struct CameraScreen: View {
         .overlay(alignment: .top) {
             // One sentence at a time (Constitution II): comparing > guidance > what the app did.
             Group {
-                if model.isComparing {
+                if model.showingCard {
+                    EmptyView() // camera sentences wait for the card (spec 05 Hikâye 7.5)
+                } else if model.isComparing {
                     StatusCaption(key: "compare.without").accessibilityIdentifier("comparing")
                 } else if let instruction = model.guidance {
                     GuidanceBanner(instruction: instruction)

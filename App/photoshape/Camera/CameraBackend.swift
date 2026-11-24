@@ -18,10 +18,22 @@ protocol CameraBackend: AnyObject, Sendable {
     func setMeteringPoint(_ point: CGPoint) async
     /// Whether the camera is working at very high sensitivity, i.e. the scene is dim (spec 04 FR-L2).
     func isLowLight() async -> Bool
+    /// What the camera is doing right now, shown next to the example's settings (spec 05 Hikâye 8.5).
+    func currentExposure() async -> LiveExposure?
     /// Point of interest in device coordinates (0–1, as `AVCaptureDevice` expects).
     func focus(atDevicePoint point: CGPoint) async
     /// Original photo file data (HEIC, with depth when available). Never contains location.
     func capturePhoto() async throws -> Data
+}
+
+/// The camera's own values at this moment (spec 05 Hikâye 8.5).
+struct LiveExposure: Sendable, Equatable {
+    /// Seconds.
+    var exposureTime: Double
+    var iso: Double
+    var fNumber: Double
+    /// White balance the camera uses, K.
+    var whiteBalance: Double?
 }
 
 enum CameraError: Error {

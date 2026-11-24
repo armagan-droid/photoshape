@@ -55,7 +55,7 @@ struct ReferencePicker<Label: View>: View {
     }
 }
 
-/// Small example icon on the camera screen; opens "Örneklerim" (Hikâye 0.2).
+/// Small example icon on the camera screen; opens the example card, or "Örneklerim" without one (Hikâye 0.2, 7.2).
 struct ReferenceChip: View {
     let store: ReferenceStore
     let open: () -> Void

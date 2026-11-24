@@ -51,6 +51,7 @@ Kurallar:
 - `composition_issue` yalnızca `composition = "bad"` olduğunda yazılır ve o zaman zorunludur.
 - `has_depth`, `device` ve `lens` yazılmaz, dosyadan okunur.
 - Bilinmeyen alan hata verir; yazım hatalarını böyle yakalarız.
+- İsteğe bağlı (2026-11-23, spec 05 kartı): `camera_angle` (`top_down`, `angled`, `eye_level`), `light_direction` (`left`, `right`, `front`, `back`, `top`, `diffuse`; fotoğrafı çekenin gözünden) ve `light_quality` (`soft`, `hard`). Emin değilsen yazma; boş alan o karenin ilgili ölçüme girmemesi demektir.
 - Bölgeler elle yazılmaz, `testset-labeler` ile işaretlenir. Eksik bölge hata değil, "eksik" olarak raporlanır; kare testlerde kullanılmaya devam eder. `--strict` ise eksik bölgede başarısız olur.
 
 ## Bölgeleri işaretleme (`testset-labeler`)

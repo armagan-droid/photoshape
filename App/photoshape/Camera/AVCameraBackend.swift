@@ -87,6 +87,23 @@ final class AVCameraBackend: NSObject, CameraBackend, @unchecked Sendable {
         }
     }
 
+    func currentExposure() async -> LiveExposure? {
+        await onQueue {
+            guard let device = self.device else { return nil }
+            var kelvin: Double?
+            if device.isWhiteBalanceModeSupported(.continuousAutoWhiteBalance) {
+                let gains = device.deviceWhiteBalanceGains
+                let max = device.maxWhiteBalanceGain
+                let clamped = AVCaptureDevice.WhiteBalanceGains(redGain: min(Swift.max(gains.redGain, 1), max),
+                                                                greenGain: min(Swift.max(gains.greenGain, 1), max),
+                                                                blueGain: min(Swift.max(gains.blueGain, 1), max))
+                kelvin = Double(device.temperatureAndTintValues(for: clamped).temperature)
+            }
+            return LiveExposure(exposureTime: device.exposureDuration.seconds, iso: Double(device.iso),
+                                fNumber: Double(device.lensAperture), whiteBalance: kelvin)
+        }
+    }
+
     func focus(atDevicePoint point: CGPoint) async {
         await onQueue {
             self.lastTapUptime = ProcessInfo.processInfo.systemUptime

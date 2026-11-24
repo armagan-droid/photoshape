@@ -27,7 +27,7 @@
 
 ## Işık (2026-11-21)
 
-- **FR-L1:** Işık okuması bir beyin modülüdür: konunun arka planına göre parlaklığı, konunun sağ/sol yarısının parlaklık dengesi. Örnek için bir kez, canlı görüntü için yönlendirmeyle birlikte.
+- **FR-L1:** Işık okuması bir beyin modülüdür: konunun arka planına göre parlaklığı, konunun sağ/sol yarısının parlaklık dengesi. Örnek için bir kez, canlı görüntü için yönlendirmeyle birlikte. **2026-11-23:** Spec 05 FR-013 bu okumayı üst/alt dengesi, gölge keskinliği ve gölge/ışık farkıyla genişletir. Örneğin tarifi kartı ile canlı yönlendirme aynı okumayı kullanır; yön kuralı (fotoğrafı çekenin gözünden) ikisinde aynıdır.
 - **FR-L2:** Loş ortam görüntüden değil kameranın ölçümünden (yüksek ışık hassasiyeti) anlaşılır, çünkü otomatik pozlama görüntüyü her zaman orta parlaklığa çeker.
 - **FR-L3:** Tavsiyeler: ters ışık → "ışığı yanına al"; loş → "daha aydınlık yere geç"; örnekte belirgin yan ışık varken canlıda yoksa → "ışık soldan/sağdan gelsin" (fotoğrafçının gözünden). Örnek de ters ışıklıysa ters ışık uyarısı verilmez.
 - **FR-L4:** Tek kanal: ekranda yine tek cümle (Constitution II). Sıra: konuyu kareye al → ters ışık / loş → mesafe → konum → poz → ışık yönü. Hikâye 5.1'deki "bir kompozisyon + bir ışık" iki kanallı tanımın yerini bu sıra alır.
@@ -45,7 +45,7 @@
 - **FR-K3:** Kadraj karşılaştırması: kişi (ya da kişisiz konu) kutusunun merkezi ve boyu örnekle karşılaştırılır; eşik dışındaysa yönlendirme verilir.
 - **FR-K4:** Yönlendirmelerin görünme kuralları FR-008 ile aynıdır: tek talimat, en az 1 sn, yanıp sönmeme, ısrar etmeme. Talimat yapısı ortak katmandaki `GuidanceInstruction`'dır (docs/ortak-kamera-paketi.md).
 - **FR-K5:** Öncelik sırası: kişiyi kareye almak → mesafe → konum → poz.
-- **FR-K6:** Cümleler iki dilde, en fazla 6 kelime, teknik terim yok (Constitution II, VI).
+- **FR-K6:** Cümleler iki dilde, en fazla 6 kelime (Constitution VI). Teknik terim kullanılmaz; 2026-11-23'ten beri (Constitution 2.0.0) bu bir tercih, yasak değil.
 
 ## Başarı kriterleri (kişi ve poz)
 
@@ -129,7 +129,7 @@ Kompozisyon ipuçları yalnızca sahne türü uyuşuyorsa verilir (Constitution 
 - **FR-004:** Şablonlar ve kurallar kodda değil, veri olarak tanımlanır. Yeni sahne türü ya da kategori eklemek kural verisi eklemekle başlar. Kod değişikliği istisna olmalıdır.
 - **FR-005:** Tarif bir kompozisyon şablonu taşıyorsa ipuçları yalnızca sahne türü şablonla uyuşuyorsa verilir; uyuşmuyorsa kompozisyon ipuçları kapanır. Tarif şablon taşımıyorsa sahnenin kendi varsayılan şablonu kullanılır (Constitution III, v1.1.0).
 - **FR-006:** Işık tavsiyesi spec 02'nin ışık sinyalinden üretilir. Işığı değiştirmeye çalışan bir işlem yapılmaz.
-- **FR-007:** Yönlendirme cümleleri en fazla 6 kelimedir, iki dildedir ve teknik terim içermez (Constitution II ve VI).
+- **FR-007:** Yönlendirme cümleleri en fazla 6 kelimedir ve iki dildedir (Constitution VI). Teknik terim kullanılmaması tercihtir (Constitution 2.0.0).
 - **FR-008:** İpuçlarının görünme ve kaybolma kuralları (en az süre, tek ipucu, ısrar etmeme) davranış olarak test edilebilir. Zaman ve kare akışı benzetilebilir olmalıdır.
 - **FR-009:** Yönlendirme sırasında canlı önizleme 30 kare/sn'nin altına düşmez.
 

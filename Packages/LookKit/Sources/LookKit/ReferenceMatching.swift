@@ -53,14 +53,32 @@ public struct ColorStats: Codable, Sendable, Hashable {
     public var meanA: Double
     public var meanB: Double
     public var meanChroma: Double
+    /// Mean b* of the nearly gray, not too dark parts (plate, table, wall): the color cast of the light, without
+    /// the colors of the things in the picture. Nil when there are too few such parts, and in profiles saved
+    /// before 2026-11-23 (spec 05 FR-014).
+    public var neutralB: Double?
+    /// Mean a* of the same gray parts: green (negative) or magenta (positive) cast. Nil like `neutralB`.
+    public var neutralA: Double?
+    /// Share of the picture that is blown white / crushed black (spec 05 FR-020). Nil in profiles before 2026-11-23.
+    public var highlightClip: Double?
+    public var shadowClip: Double?
 
     public init(colors: [SIMD3<Double>]) {
         var ls: [Double] = [], sumA = 0.0, sumB = 0.0, sumC = 0.0
+        var grayA = 0.0, grayB = 0.0, grayN = 0, blown = 0, crushed = 0
         ls.reserveCapacity(colors.count)
         for c in colors {
             let lab = ColorScience.lab(fromSRGB: (c.x, c.y, c.z))
             ls.append(lab.l); sumA += lab.a; sumB += lab.b; sumC += hypot(lab.a, lab.b)
+            if lab.l > 25, hypot(lab.a, lab.b) < 14 { grayA += lab.a; grayB += lab.b; grayN += 1 }
+            if max(c.x, c.y, c.z) >= 0.985 { blown += 1 }
+            if max(c.x, c.y, c.z) <= 0.02 { crushed += 1 }
         }
+        let hasGray = grayN >= max(8, colors.count / 20)
+        neutralB = hasGray ? grayB / Double(grayN) : nil
+        neutralA = hasGray ? grayA / Double(grayN) : nil
+        highlightClip = colors.isEmpty ? nil : Double(blown) / Double(colors.count)
+        shadowClip = colors.isEmpty ? nil : Double(crushed) / Double(colors.count)
         let n = Double(max(colors.count, 1))
         let mean = ls.reduce(0, +) / n
         meanL = mean

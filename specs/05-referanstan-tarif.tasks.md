@@ -11,6 +11,9 @@
 - [x] T8 Kayıtta örnek bilgisi (`EditRecord.look`, `reference:<id>`)
 - [x] T9 UI testleri: açılış sorusu ve atlama, koyu örnek önizlemeyi koyulaştırır ve hatırlanır, Örneklerim'den örneksiz çekme, örnekle çekim
 
+## Örneğin tarifi kartı (2026-11-23)
+- [x] Hikâye 7: bkz. `05-ornegin-tarifi.plan.md` ve `05-ornegin-tarifi.tasks.md`
+
 ## Sonraki adımlar
 - [ ] 2. adım: ekran görüntüsünde uygulama arayüzünü ayıklama (FR-003, SC-003)
 - [ ] 3. adım: örneğe göre açı, mesafe ve ışık yönlendirmesi (spec 04; test seti gerekli)
