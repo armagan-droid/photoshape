@@ -11,10 +11,10 @@
 
 ## Sonraki
 - [x] Geliştirici derlemesinde canlı konu mavi iskelet/kutu ile çizilir ve her saniye teşhis satırı yazılır
-- [ ] Baş eğimi, gövde ve bacaklar için poz ipuçları
+- [x] Baş eğimi, gövde ve bacaklar için poz ipuçları (2026-11-24): baş eğimi omuz çizgisine göre (telefonu biraz yamuk tutmak sayılmaz) ≥ 12°, gövde eğimi ≥ 12°, bacak açıklığı gövde boyunun ≥ 0,35'i; her uzuv kendi eşiğine göre puanlanır, en çok aşan söylenir; kişinin kendi sol/sağı; eklem yoksa ipucu yok. Yönlendirme cümleleri için iki dil + ≤ 6 kelime testi
 - [x] Işık tavsiyesi (FR-L1…L4): ters ışık, loş (kameranın hassasiyetinden), örneğe göre ışık yönü; tek kanal sırası; testler
 - [x] Parlaklık koruması: parlak uçlar beyaza yakınsa kamera daha fazla açılmaz; üst sınır +1,0 EV
-- [ ] Telefon eğimi (tepeden çekim) — CoreMotion
+- [x] Telefon eğimi (tepeden çekim) — CoreMotion (2026-11-24): `PhoneTilt` yerçekimi vektöründen telefonun aşağı bakma açısını okur; örnek tepedense < 60° → "Telefonu tepeden, yere paralel tut", eğikse < 15° / > 80°, göz hizasıysa > 40° → ipucu. Örneğin açısı yalnızca güvenle okunduysa kullanılır. Açı ipucu sıranın en başında (yanlış yükseklikten kadraj zaten uymaz). Simülatörde hareket sensörü yok; `-UITestPhoneDownward` ile sabit açı verilebilir
 - [ ] Test setine kişili kareler (spec 00) ve SC-K4 kullanıcı denemesi
 
 ## Elle (iPhone 17)
@@ -25,3 +25,5 @@
 - [ ] Hazır halkasının çıktığı tam eşleşme
 - [ ] Yemek/fincan örneğiyle: kenar taslağı ve kadraj ipuçları
 - [ ] Yönlendirme açıkken akıcılık (SC-K3)
+- [ ] Baş/gövde/bacak ipuçları gerçek kişide: eşikler gürültülü mü (özellikle baş eğimi 12°); gövde eğimi telefonun dik tutulduğunu varsayar
+- [ ] Tepeden fincan örneğinde telefonu dik tutunca "Telefonu tepeden, yere paralel tut", yatırınca kayboluyor mu

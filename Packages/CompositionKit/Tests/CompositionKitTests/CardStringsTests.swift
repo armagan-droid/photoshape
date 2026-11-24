@@ -25,6 +25,18 @@ struct CardStringsTests {
         s.split { $0.isWhitespace }.filter { $0.contains { $0.isLetter } }.count
     }
 
+    /// Spec 04 FR-K6: guidance sentences in both languages, at most 6 words.
+    @Test func guideSentencesAreShortInBothLanguages() throws {
+        let catalog = try Self.catalog()
+        for key in CompositionGuide.allPhraseKeys {
+            for lang in ["tr", "en"] {
+                let text = catalog[key]?[lang] ?? ""
+                #expect(!text.isEmpty, "\(key) \(lang) missing")
+                #expect(Self.words(text) <= 6, "\(key) \(lang): \(text)")
+            }
+        }
+    }
+
     @Test func everyKeyHasTurkishAndEnglish() throws {
         let catalog = try Self.catalog()
         let keys = ExampleReading.allPhraseKeys + ExampleReading.topicTitleKeys

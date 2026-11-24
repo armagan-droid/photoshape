@@ -83,6 +83,7 @@ final class CameraModel {
     private(set) var isComparing = false
     private var guidedReferenceID: UUID?
     private let finder = SubjectFinder()
+    private let motion = PhoneMotion()
     /// Developer builds: the subject found in the live frame (4:5 frame coordinates), drawn in blue.
     private(set) var debugLiveSubject: Subject?
     private var lastGuideLog = 0.0
@@ -180,7 +181,9 @@ final class CameraModel {
         let c = CropGeometry.normalizedCrop(aspectWidth: 3, aspectHeight: 4)
         let liveInFrame = live?.cropped(to: CGRect(x: c.x, y: c.y, width: c.w, height: c.h))
         let exampleInFrame = example.placed(in: exampleRegion(exampleAspect: CGFloat(aspect)))
-        let raw = CompositionGuide.instruction(live: liveInFrame, example: exampleInFrame, light: light)
+        let exampleAngle = reference.angle.flatMap { $0.confidence >= ShotAngleEstimator.minimumConfidence ? $0.angle : nil }
+        let raw = CompositionGuide.instruction(live: liveInFrame, example: exampleInFrame, light: light,
+                                               phoneDownward: motion.downwardAngle, exampleAngle: exampleAngle)
         #if DEBUG
         debugLiveSubject = liveInFrame
         if now - lastGuideLog > 1 {
@@ -275,6 +278,7 @@ final class CameraModel {
         lensOptions = await backend.start()
         startMatching()
         startAnalyzing()
+        motion.start()
         if let option = lensOptions.first(where: { $0.kind == selectedLens }) { await backend.select(option) }
     }
 
@@ -283,6 +287,7 @@ final class CameraModel {
         isActive = false
         matchTask?.cancel()
         analyzeTask?.cancel()
+        motion.stop()
         await backend.stop()
     }
 

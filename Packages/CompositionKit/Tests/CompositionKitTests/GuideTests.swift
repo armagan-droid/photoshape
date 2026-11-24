@@ -68,6 +68,73 @@ struct GuideTests {
         #expect(hint?.kind == "pose.rightArm.\(exampleAngle > liveAngle ? "up" : "down")")
     }
 
+    // MARK: - Head, torso, legs (spec 04 K2.1, 2026-11-24)
+
+    static func with(_ pose: BodyPose, _ change: (inout [Joint: CGPoint]) -> Void) -> BodyPose {
+        var j = pose.joints
+        change(&j)
+        return BodyPose(joints: j)
+    }
+
+    /// Eyes level, or turned by `deg` toward the person's own left shoulder (image right when facing the camera).
+    static func headTilted(_ deg: CGFloat, base: BodyPose = Poses.person()) -> BodyPose {
+        with(base) { j in
+            let c = j[.nose]!, r = deg * .pi / 180, half: CGFloat = 0.03
+            j[.leftEye] = CGPoint(x: c.x + half * cos(r), y: c.y + half * sin(r))
+            j[.rightEye] = CGPoint(x: c.x - half * cos(r), y: c.y - half * sin(r))
+        }
+    }
+
+    @Test(arguments: [(CGFloat(20), "pose.head.left"), (-20, "pose.head.right")])
+    func namesTheHeadTilt(exampleTilt: CGFloat, expected: String) {
+        let hint = CompositionGuide.poseInstruction(live: Self.headTilted(0), example: Self.headTilted(exampleTilt))
+        #expect(hint?.kind == expected)
+        #expect(CompositionGuide.poseInstruction(live: Self.headTilted(5), example: Self.headTilted(0)) == nil, "small tilts are fine")
+    }
+
+    @Test func headTiltIsMeasuredAgainstTheShoulders() {
+        // The whole person turned 10° (phone held a little crooked): no head hint.
+        func rotated(_ p: BodyPose, _ deg: CGFloat) -> BodyPose {
+            let r = deg * .pi / 180, c = CGPoint(x: 0.5, y: 0.5)
+            return BodyPose(joints: p.joints.mapValues { q in
+                CGPoint(x: c.x + (q.x - c.x) * cos(r) - (q.y - c.y) * sin(r), y: c.y + (q.x - c.x) * sin(r) + (q.y - c.y) * cos(r))
+            })
+        }
+        let tilt = CompositionGuide.headTilt(rotated(Self.headTilted(0), 10))!
+        #expect(abs(tilt) < 1)
+    }
+
+    @Test func namesTheTorsoLean() {
+        let upright = Poses.person()
+        // Neck moved toward image right = the person's own left when facing the camera.
+        let leaning = Self.with(upright) { j in j[.neck]!.x += 0.06 }
+        #expect(CompositionGuide.poseInstruction(live: upright, example: leaning)?.kind == "pose.torso.left")
+        #expect(CompositionGuide.poseInstruction(live: leaning, example: upright)?.kind == "pose.torso.right")
+    }
+
+    @Test func namesTheLegThatDiffers() {
+        let together = Poses.person()
+        let leftOut = Self.with(together) { j in j[.leftAnkle]!.x += 0.12 } // left side is image right
+        #expect(CompositionGuide.poseInstruction(live: together, example: leftOut)?.kind == "pose.leftLeg.out")
+        #expect(CompositionGuide.poseInstruction(live: leftOut, example: together)?.kind == "pose.leftLeg.in")
+        let rightOut = Self.with(together) { j in j[.rightAnkle]!.x -= 0.12 }
+        #expect(CompositionGuide.poseInstruction(live: together, example: rightOut)?.kind == "pose.rightLeg.out")
+    }
+
+    @Test func theBiggestDifferenceIsNamed() {
+        // Arm 40° off (1.4× its limit) and head 30° off (2.5× its limit): the head comes first.
+        let example = Self.headTilted(30, base: Poses.person(leftArm: 60))
+        let live = Self.headTilted(0, base: Poses.person(leftArm: 20))
+        #expect(CompositionGuide.poseInstruction(live: live, example: example)?.kind == "pose.head.left")
+    }
+
+    @Test func missingJointsGiveNoHint() {
+        let noEyes = Poses.person(), noLegs = Self.with(Poses.person()) { j in j[.leftAnkle] = nil; j[.rightAnkle] = nil }
+        #expect(CompositionGuide.headTilt(noEyes) == nil)
+        #expect(CompositionGuide.legSpread(noLegs, hip: .leftHip, ankle: .leftAnkle) == nil)
+        #expect(CompositionGuide.poseInstruction(live: noLegs, example: Poses.person()) == nil)
+    }
+
     @Test func similarityIgnoresPlaceAndScale() {
         let a = Poses.person(at: CGPoint(x: 0.3, y: 0.4), height: 0.4, leftArm: 90, rightArm: 150)
         let b = Poses.person(at: CGPoint(x: 0.6, y: 0.6), height: 0.8, leftArm: 90, rightArm: 150)

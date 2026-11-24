@@ -256,6 +256,74 @@
         }
       }
     },
+    "guide.angle.holdFlat": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hold the phone flat, from above"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Telefonu tepeden, yere paralel tut"
+          }
+        }
+      }
+    },
+    "guide.angle.holdUpright": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hold the phone upright"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Telefonu dik tut"
+          }
+        }
+      }
+    },
+    "guide.angle.raise": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raise the phone a little"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Telefonu biraz dikleştir"
+          }
+        }
+      }
+    },
+    "guide.angle.tipForward": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tip the phone forward a bit"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Telefonu biraz öne eğ"
+          }
+        }
+      }
+    },
     "guide.closer": {
       "extractionState": "manual",
       "localizations": {
@@ -290,6 +358,40 @@
         }
       }
     },
+    "guide.head.left": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tilt your head left"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başını sola eğ"
+          }
+        }
+      }
+    },
+    "guide.head.right": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tilt your head right"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başını sağa eğ"
+          }
+        }
+      }
+    },
     "guide.leftArm.down": {
       "extractionState": "manual",
       "localizations": {
@@ -320,6 +422,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sol kolunu kaldır"
+          }
+        }
+      }
+    },
+    "guide.leftLeg.in": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bring your left leg in"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sol bacağını içeri al"
+          }
+        }
+      }
+    },
+    "guide.leftLeg.out": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move your left leg out"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sol bacağını aç"
           }
         }
       }
@@ -477,6 +613,40 @@
         }
       }
     },
+    "guide.rightLeg.in": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bring your right leg in"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sağ bacağını içeri al"
+          }
+        }
+      }
+    },
+    "guide.rightLeg.out": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move your right leg out"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sağ bacağını aç"
+          }
+        }
+      }
+    },
     "guide.subjectIn": {
       "extractionState": "manual",
       "localizations": {
@@ -524,6 +694,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Telefonu biraz yukarı çevir"
+          }
+        }
+      }
+    },
+    "guide.torso.left": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lean to your left"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gövdeni sola eğ"
+          }
+        }
+      }
+    },
+    "guide.torso.right": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lean to your right"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gövdeni sağa eğ"
           }
         }
       }
