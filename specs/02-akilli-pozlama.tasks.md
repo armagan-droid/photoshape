@@ -9,7 +9,12 @@
 - [x] T6 Basılı tutunca ayarsız görüntü (FR-011, Constitution 1.3.0)
 - [x] T7 Renk eşleştirmesi artık parlaklığa dokunmuyor; örneğin parlaklık farkı pozlamaya tercih olarak gidiyor
 
+## 2. dilim: beyaz dengesi (2026-11-24)
+- [x] T8 `WhiteBalanceDecider` (CompositionKit): kameranın otomatik beyaz dengesinin düzelttiği ışık (K) → görünüme geri verilecek sıcaklık. Sıcak ışıkta mired cinsinden %15'i kalır (4000 K ışık 5950 K gibi görünür), 5000 K'den soğukta tamamen nötr, 4000–5000 K arası yumuşak geçiş, üst sınır 0.8 (≈ 3700 K altı lambalar); testler: gün ışığı/soğuk ışık nötr, sıcaklıkla artış, sınırda sıçrama yok, SC-003 sentetik kısmı (beyaz tabakta kayma en az yarıya iner, sıfırlanmaz)
+- [x] T9 Uygulama: saniyede 4 kameranın beyaz dengesi okunur, sıcaklık yumuşak geçişle görünüme eklenir (önizleme ve kayıt aynı, FR-005); örnek seçiliyken eklenmez (renk eşleştirmesi örneğe göre kurar, FR-004); basılı tutunca kalkar (FR-011)
+
 ## Sonraki
-- [ ] Beyaz dengesi kararı (FR-003, SC-003): şu an iOS'un otomatik beyaz dengesi + renk eşleştirmesi
+- [ ] Beyaz dengesi cihazda: sarı lamba altında beyaz tabak "hafif sıcak beyaz" mı, lamba açılıp kapanınca önizleme sıçramadan geçiyor mu; `keptWarmth` değerini ayarla
+- [ ] Karışık ışıkta konuya göre beyaz dengesi (Hikâye 3.2): şu an tüm kare için iOS'un kararı kullanılıyor
 - [ ] Test setinde SC-001…SC-005 ölçümü (spec 00 kareleri gerekli)
 - [ ] Ters ışık / loş cihaz denemeleri (SC-004, SC-007), kör karşılaştırma (SC-008)

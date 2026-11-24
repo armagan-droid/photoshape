@@ -119,7 +119,7 @@ Telefonda (iPhone 12) ölçülenler:
 
 ## Açık sorular
 
-1. **Beyaz dengesinde bırakılacak sıcaklık:** Başlangıç için "yarısını düzelt" yaklaşımı uygun mu? Bunu test setinde ayarlamak, plan aşamasında bir görev olabilir.
+1. **Beyaz dengesinde bırakılacak sıcaklık:** Başlangıç için "yarısını düzelt" yaklaşımı uygun mu? Bunu test setinde ayarlamak, plan aşamasında bir görev olabilir. **2026-11-24:** Başlangıç değeri mired cinsinden %15 (`WhiteBalanceDecider.keptWarmth`). "Yarısı" fazla sıcak kalıyor, çünkü iOS çok sıcak ışıkta zaten biraz sıcaklık bırakıyor. Beyaz dengesi kilitlenmiyor: iOS otomatiği çalışmaya devam ediyor ve sıcaklığın bir kısmı görünüm katmanında geri veriliyor. Değer cihazda ve test setinde ayarlanacak.
 2. **Gece modu:** Loş ortamda iOS'un kendi gece modu üçüncü taraf uygulamalara açık değil. Birden fazla kareyi birleştirerek gürültü azaltmak MVP kapsamında mı, yoksa spec 06 (seri çekim) ile mi gelmeli? Öneri: spec 06.
 3. **Tarifin pozlamaya etkisi (FR-004):** MVP'de gerekli mi, yoksa tüm tarifler aynı temeli mi kullanmalı? Öneri: alan tanımlansın ama MVP tariflerinde boş kalsın.
 4. **SC-008 değerlendiricileri:** Kim olacak? Yakın çevreden 5 kişi yeterli mi?

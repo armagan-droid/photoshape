@@ -46,6 +46,9 @@ final class CameraModel {
     var showingCard = false
     /// Color adjustments that make the current scene look like the example (spec 05 FR-010); zero without one.
     private(set) var adjustments = LookAdjustments.zero
+    /// Warmth given back after the camera's auto white balance (spec 02 FR-003); zero with an example,
+    /// whose own color the matching follows instead (FR-004).
+    private(set) var baseWarmth = 0.0
 
     let backend: CameraBackend
     let references: ReferenceStore
@@ -98,7 +101,10 @@ final class CameraModel {
     /// The look the preview and the saved photo use right now.
     var currentLook: LookRecipe {
         var recipe = LookRecipe.natural
-        if !isComparing { recipe.adjustments = adjustments }
+        if !isComparing {
+            recipe.adjustments = adjustments
+            recipe.adjustments.temperature = min(1, adjustments.temperature + baseWarmth)
+        }
         return recipe
     }
 
@@ -121,10 +127,9 @@ final class CameraModel {
             (finder.detect(frame), sampler.sample(frame)?.luminanceGrid)
         }.value
         let now = ProcessInfo.processInfo.systemUptime
-        if showingCard {
-            let values = await backend.currentExposure()
-            if values != liveExposure { liveExposure = values }
-        }
+        let values = await backend.currentExposure()
+        if showingCard, values != liveExposure { liveExposure = values }
+        balanceWhite(cameraKelvin: values?.whiteBalance)
         await expose(grid: grid, subject: live, now: now)
         await guide(live: live, grid: grid, now: now)
     }
@@ -150,6 +155,14 @@ final class CameraModel {
             case .none: break
             }
         }
+    }
+
+    /// Keeps part of a warm room's warmth (spec 02 FR-003). Eases toward the target so a lamp switched on
+    /// does not make the preview jump (spec 02 uç durum).
+    private func balanceWhite(cameraKelvin: Double?) {
+        let target = matchedReferenceID == nil ? WhiteBalanceDecider.warmth(cameraKelvin: cameraKelvin) : 0
+        let next = abs(target - baseWarmth) < 0.01 ? target : baseWarmth + 0.3 * (target - baseWarmth)
+        if next != baseWarmth { baseWarmth = next }
     }
 
     /// Guidance toward the example's framing, pose and light (spec 04).
@@ -299,7 +312,7 @@ final class CameraModel {
         let recipe = currentLook, renderer = renderer
         let lookRef = references.current.flatMap { ref in
             adjustments == .zero ? nil : EditRecord.LookReference(id: "reference:\(ref.id.uuidString)", version: ref.profile.version, strength: 1)
-        }
+        } ?? (recipe.adjustments.temperature > 0 ? EditRecord.LookReference(id: "base:white-balance", version: 1, strength: 1) : nil)
         Task {
             defer { gate.finish() }
             do {
