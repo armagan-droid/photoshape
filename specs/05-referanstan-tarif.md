@@ -12,6 +12,8 @@
 > **2026-11-23, örneğin tarifi kartı (Constitution 2.0.0):** Uygulama örnekten çıkardıklarını kullanıcıya göstermiyordu; cihaz denemesinde ayarlar hissedilmedi (spec 02, 2026-11-22). Hikâye 7, FR-011..FR-017 ve SC-007..SC-013 eklendi. FR-009'daki çekim açısı ve ışığın karakteri bu kapsamda yazılıyor. Hikâye 0.2 güncellendi: ikona dokunmak kartı açar.
 >
 > **2026-11-23, örneğin ayarları (Hikâye 8):** Kullanıcı seçtiği fotoğrafın ışık ve pozlama ayarlarını sayılarla görmek istiyor (Constitution 2.0.0 buna izin verir). Açık soru 8 bu hikâyeyle kapsama alındı. FR-018..FR-023, SC-014..SC-017 eklendi.
+>
+> **2026-11-24, cihazdaki dil modeliyle özet (Hikâye 9):** Açık soru 7 kapsama alındı. Test cihazı iPhone 17 (Apple Intelligence destekli). Kart, destekleyen cihazlarda en üstte örneği 2–3 cümleyle anlatan bir özet gösterir. Özet yalnızca uygulamanın ölçtüklerini anlatır; satırlar ve "Böyle çek" maddeleri bugünkü gibi kural tabanlı kalır. FR-024..FR-031, SC-018..SC-022 eklendi. Constitution 2.1.0 ile onaylandı (2026-11-24).
 
 ## Ne ve neden
 
@@ -109,6 +111,22 @@ Instagram ve benzeri uygulamaların ekran görüntülerinde ve indirilen kopyala
 5. **Verilen:** örnek seçili ve kamera açık. **O zaman:** kart, uygulamanın bu örnek için kameraya uyguladığı ayarları ve kameranın şu anki değerlerini örnekle yan yana gösterir: uygulamanın parlaklık ayarı (EV), kameranın enstantanesi, ISO'su, diyaframı, lensi ve beyaz dengesi (yaklaşık K). Değerler kart açıkken canlı güncellenir. Kamera ekranına değer şeridi eklenmez (netleştirme 7).
 6. Kullanıcı bu değerleri değiştiremez; çekim kontrolleri listesi değişmez (Constitution II, 2.0.0).
 
+### Hikâye 9 — Cihazdaki dil modeliyle örneğin özeti (P2, 2026-11-24)
+
+Kart bugün kısa ve kalıp cümleler kuruyor ("Işık soldan, yumuşak geliyor."). Satırlar doğru ama birbirine bağlanmıyor: kullanıcı fotoğrafın neden böyle göründüğünü tek bir anlatı olarak duymuyor. Apple'ın cihazdaki dil modeli (Foundation Models), uygulamanın zaten ölçtüğü değerleri 2–3 cümlelik doğal bir anlatıya çevirebilir:
+
+> "Işık soldaki pencereden, yumuşak geliyor; bu yüzden gölgeler hafif. Tepeden çekilmiş ve fincan kareyi dolduruyor. Renkler sıcak ama doğal."
+
+Model **yeni bilgi üretmez, yalnızca anlatır.** Girdisi uygulamanın okuması ve ölçümleridir; görüntünün kendisi modele verilmez (netleştirme 8). Model olmayan cihazda kart bugünkü haliyle eksiksizdir.
+
+**Kabul senaryoları**
+1. **Verilen:** cihazda dil modeli kullanılabilir ve uygulamanın dilini destekliyor. **Olduğunda:** bir örnek eklenir. **O zaman:** okuma bittikten sonra arka planda özet üretilir ve örnekle birlikte saklanır. Kart, özet hazırsa en üstte gösterir. Özet hazır değilse kart beklemeden açılır; özet hazır olunca yerine oturur (yükleniyor göstergesi yok).
+2. **Verilen:** iOS 18–25, Apple Intelligence'ı desteklemeyen bir cihaz, Apple Intelligence kapalı, model henüz indirilmemiş ya da dil desteklenmiyor. **O zaman:** özet bölümü hiç görünmez. Hata, uyarı ya da "Apple Intelligence'ı aç" mesajı gösterilmez. Kart Hikâye 7 ve 8'deki gibidir.
+3. **Verilen:** üretilen özet denetimden (FR-027) geçmedi. **O zaman:** bir kez yeniden denenir; yine geçmezse özet gösterilmez. Kullanıcı farkı görmez.
+4. **Verilen:** özet gösteriliyor. **O zaman:** özette yazan her şey kartın satırlarıyla aynıdır: satır "ışık soldan" diyorsa özet "sağdan" diyemez; satır gizlenmişse (Hikâye 7.3) özet o konu hakkında bir şey söylemez.
+5. **Verilen:** kullanıcı uygulamanın dilini değiştirdi. **Olduğunda:** kart açılır. **O zaman:** eski dildeki özet gösterilmez; yeni dilde bir kez üretilir (1. senaryodaki gibi).
+6. Özet bir yönlendirme değildir: "Böyle çek" maddeleri ve canlı yönlendirme özetten etkilenmez.
+
 ## Uç durumlar
 
 - **Kötü kaynak:** Düşük çözünürlüklü ya da yoğun sıkıştırılmış ekran görüntüsünde, sıkıştırma bozulmaları tarife gren ya da renk bandı olarak aktarılmaz.
@@ -150,6 +168,14 @@ Instagram ve benzeri uygulamaların ekran görüntülerinde ve indirilen kopyala
 - **FR-023 (2026-11-23):** Bu özellikten önce eklenmiş örneklerde fotoğraf bilgisi yoktur (görüntü saklanmadığı için yeniden okunamaz); yalnızca saklanan istatistiklerden hesaplanabilenler gösterilir.
 - **FR-017 (2026-11-23):** Okuma örnek eklenirken bir kez yapılır ve örnekle birlikte saklanır; tam boyutlu görüntü yine saklanmaz (Hikâye 6.2). Bu özellikten önce eklenmiş örneklerde okunamayan satırlar gösterilmez (Hikâye 7.3).
 
+- **FR-024 (2026-11-24, Hikâye 9):** Özet yalnızca cihazdaki model (`SystemLanguageModel`) ile üretilir. Apple'ın bulutta çalışan modeli (`PrivateCloudComputeLanguageModel`) ve başka bir bulut hizmeti kullanılmaz (Constitution I). Kullanılabilirlik, model ve dil desteği her üretimden önce sorulur; iOS 26 öncesinde kod yolu hiç çalışmaz.
+- **FR-025 (2026-11-24):** Modelin girdisi deterministik bir "özet girdisi"dir: kartın gösterdiği satırların konuları ve değerleri (`ExampleReading`). Gizlenmiş satırlar girdiye girmez. Sayılar (çekim değerleri, yaklaşık değerler) girdiye girmez; onlar kartın "Ayarlar" bölümündedir (Hikâye 8). Girdi bir beyin modülünde kurulur ve macOS'ta test edilir (Constitution IV). Görüntü, örneğin adı ya da kullanıcıya ait başka bir bilgi girdiye girmez.
+- **FR-026 (2026-11-24):** Özet en fazla 3 cümle ve 45 kelimedir; uygulamanın dilindedir; fotoğraftan anlamayan birinin anlayacağı dille yazılır. Sayı içermez (FR-025). Kullanıcıya hitap eden emir cümlesi kurmaz (o "Böyle çek"in işi).
+- **FR-027 (2026-11-24):** Üretilen her özet gösterilmeden önce deterministik bir denetimden geçer (beyin modülü, macOS'ta test edilir): uzunluk sınırı; dil; rakam yok; konunun ne olduğu (fincan, yemek, kişi) girdide yoksa söylenmez; ışık yönü, sıcak/soğuk, aydınlık/karanlık ve açı sözcükleri girdideki değerlerle çelişmiyor; girdide olmayan konu yok. Denetimden geçemeyen özet gösterilmez (Hikâye 9.3).
+- **FR-028 (2026-11-24):** Özet örnek eklenirken bir kez, dil başına üretilir ve örnekle saklanır (FR-017 ile aynı kural). Kartın açılması özeti beklemez. Bu özellikten önce eklenmiş örneklerde özet, kart ilk açıldığında saklanan okumadan üretilir.
+- **FR-029 (2026-11-24):** Üretim canlı kamerayı yavaşlatmaz: canlı analiz döngüsünde çalışmaz, düşük öncelikle ve tek seferde bir örnek için çalışır. Kamera açıkken önizleme 30 kare/sn'nin altına düşmez (Ek Kısıtlar).
+- **FR-030 (2026-11-24):** Özet, bölüm başlığında modelle yazıldığını belli eden kısa bir ifadeyle gösterilir (ör. "Kısaca"). Kesin ifade netleştirmede seçilir (açık soru 12).
+- **FR-031 (2026-11-24):** Modelin talimatı (sistem metni) uygulamaya gömülüdür ve String Catalog dışındadır; kullanıcıya görünmez. Kullanıcıya görünen her sabit metin (başlık vb.) String Catalog'dadır (Constitution VI).
 ## Temel varlıklar
 
 - **ReferenceImage:** kullanıcının seçtiği görüntü (yalnızca işlem süresince tam boyutlu).
@@ -159,6 +185,8 @@ Instagram ve benzeri uygulamaların ekran görüntülerinde ve indirilen kopyala
 - **ExampleReading:** kartın içeriği: ışık (yön, karakter), aydınlık, renk, açı, konu (boyut, yer) satırları; her biri isteğe bağlı. Sıralı "Böyle çek" maddeleri. Her öğe bir cümle anahtarıdır, metin değildir.
 - **ExampleSettings (2026-11-23):** fotoğraf bilgisinden okunan çekim değerleri: enstantane, diyafram, ISO, odak uzaklığı (ve 35 mm karşılığı), pozlama telafisi, flaş, cihaz modeli; hepsi isteğe bağlı.
 - **ExampleMeasurements (2026-11-23):** görüntüden okunan yaklaşık değerler: parlaklık farkı (EV), kontrast (kademe), patlamış/kararmış oran, renk sıcaklığı (K), yeşil/mor kayma.
+- **ExampleSummaryInput (2026-11-24):** modele giden deterministik girdi: konu → değer listesi, yaklaşık değerler, çekim değerleri, hedef dil.
+- **ExampleSummary (2026-11-24):** üretilmiş özet metni, dili, üretildiği model sürümü; örnekle saklanır.
 - **ShotAngle:** `topDown`, `angled`, `eyeLevel` + güven.
 
 ## Başarı kriterleri
@@ -181,6 +209,13 @@ macOS'ta ölçülenler:
 - **SC-016 (2026-11-23, renk sıcaklığı):** Sentetik sahnede ısıtma/soğutma arttıkça okunan sıcaklık tek yönde değişir. Test setinde `warm_indoor` ışıklı karelerin ≥ %80'inde okunan sıcaklık `window_daylight` karelerinin ortancasından düşüktür (sarı ışık = düşük K).
 - **SC-017 (2026-11-23, tutarlılık):** Kartın cümleleri ile sayıları çelişmez: "aydınlık" yazan örneklerde parlaklık farkı ≥ 0, "karanlık" yazanlarda ≤ 0; "sıcak" yazanlarda sıcaklık nötrün sıcak tarafında (%100, sentetik ve test seti).
 
+- **SC-018 (2026-11-24, girdi):** Özet girdisi deterministiktir (aynı okuma → aynı girdi, %100); gizlenmiş satırların konusu girdide hiç yer almaz (%100).
+- **SC-019 (2026-11-24, denetim):** Elle yazılmış en az 30 özet örneğiyle (doğru, çelişen yön/sıcaklık/açı, uydurma sayı, fazla uzun, yanlış dil) denetim doğru olanların hepsini geçirir, hatalıların hepsini reddeder (%100). macOS'ta modelsiz çalışır.
+- **SC-020 (2026-11-24, modelsiz):** Model kullanılamadığında kart Hikâye 7–8 testlerinden aynen geçer; mevcut UI testleri değişmeden geçer.
+
+Telefonda (iPhone 17) ölçülenler:
+- **SC-021 (2026-11-24):** 20 farklı örnekte, her iki dilde: özetlerin ≥ %90'ı ilk ya da ikinci denemede denetimden geçer. Geçen özetlerde elle okumada kartla çelişen ya da girdide olmayan bilgi içeren özet sayısı 0.
+- **SC-022 (2026-11-24):** Örnek eklendikten sonra özetin hazır olması ≤ 5 sn; kartın açılması özet yüzünden gecikmez; üretim sırasında önizleme 30 kare/sn'nin altına düşmez.
 Kullanıcıyla ölçülenler:
 - **SC-013 (2026-11-23):** 5 test kullanıcısının en az 4'ü kartı okuduktan sonra, sorulduğunda örneğin nasıl çekildiğini kendi sözleriyle doğru anlatır (en az ışık ya da açıdan biri) ve en az bir "Böyle çek" maddesini uygular.
 - **SC-005:** Kör değerlendirmede, referans + kullanıcının o tarifle çektiği fotoğraf çiftlerinin ≥ %70'inde değerlendiriciler "havası benziyor" der.
@@ -195,6 +230,7 @@ Kullanıcıyla ölçülenler:
 5. **Kamera bilgisi olmayan örnekler (Hikâye 8):** Yalnızca görüntüden okunan yaklaşık değerler, "yaklaşık" etiketiyle. ISO ve enstantane tahmin edilip gösterilmez.
 6. **Açıklamalar (Hikâye 8.4):** Her değerin yanında etkisini anlatan kısa bir açıklama olur.
 7. **Kameranın kendi değerleri (Hikâye 8.5):** Kartta örnekle yan yana gösterilir. Kamera ekranında sürekli bir değer şeridi yoktur.
+8. **Modele görüntü verilmez (Hikâye 9, 2026-11-24):** iOS 27'de model görüntü alabiliyor, ama görüntüye bakan model kendi okumasını yapar; bu okuma uygulamanın ölçümüyle çelişebilir ve test seti dışında doğrulanamaz. Özet yalnızca ölçülenleri anlatır. Görüntü girdisi ayrı bir hikâyede ve test setiyle ölçülerek düşünülebilir.
 
 ## Elle test listesi
 
@@ -206,6 +242,7 @@ Kullanıcıyla ölçülenler:
 - [ ] Örneğin tarifi kartı (iPhone 12, iOS 18): yeni örnekte kart kendiliğinden açılıyor; ikona dokununca yeniden açılıyor; metin taşmıyor (Türkçe ve İngilizce, büyük yazı boyutu); okunamayan satır boş görünmüyor; kart açıkken kamera cümleleri görünmüyor
 - [ ] Örneğin ayarları (iPhone 12): kendi çektiğin bir fotoğrafta enstantane/diyafram/ISO, Fotoğraflar uygulamasının bilgi (ⓘ) ekranındakiyle aynı; ekran görüntüsünde çekim değerleri görünmüyor, yaklaşık değerler görünüyor; Türkçede ondalık virgül
 - [ ] Kartın yazdığı ışık maddesi, aynı örnekle kamerada çıkan ışık yönlendirmesiyle çelişmiyor
+- [ ] Özet (iPhone 17, Hikâye 9): Türkçe ve İngilizce özet üretiliyor mu (Türkçe desteği `supportsLocale` ile kontrol); Apple Intelligence kapalıyken kart özetsiz, hatasız açılıyor; uçak modunda özet yine üretiliyor (yalnızca cihazda çalıştığının kanıtı); büyük yazı boyutunda özet taşmıyor
 
 ## Açık sorular
 
@@ -215,6 +252,13 @@ Kullanıcıyla ölçülenler:
 4. **Kota birimi:** "Haftada 3" takvim haftası mı (pazartesi sıfırlanır), yoksa kayan 7 gün mü? Öneri: kayan 7 gün, kullanıcıya "3 gün sonra yeni hakkın açılır" diye gösterilir.
 5. **Silme ve kota:** Silinen görünüm kotayı iade etmeli mi? Öneri: hayır, kötüye kullanımı önler.
 6. **Paylaşım:** Kullanıcı kendi çıkardığı tarifi bir arkadaşıyla paylaşabilmeli mi (dosya olarak, sunucusuz)? Bu sosyal bir özellik (kapsam dışı), ama tarif formatı buna hazır.
-7. **Cihazdaki dil modeliyle daha zengin anlatım (2026-11-23, bilerek ertelendi):** Apple'ın cihazdaki modeli (Foundation Models; iOS 26 ve sonrası, Apple Intelligence destekli cihazlar, iPhone 15 Pro ve sonrası) ışığı ve sahneyi daha zengin cümlelerle anlatabilir. Cihazda çalıştığı için Constitution I ile uyumludur. Ancak iOS 18 ve iPhone 12 desteği (Ek Kısıtlar) nedeniyle yalnızca kural tabanlı kartın **üzerine** isteğe bağlı bir katman olabilir; kart onsuz eksiksiz çalışmalıdır. Serbest metnin kısa ve doğru kalmasının nasıl garanti edileceği ayrıca konuşulacak.
+7. **Cihazdaki dil modeliyle daha zengin anlatım (2026-11-23, bilerek ertelendi):** Apple'ın cihazdaki modeli (Foundation Models; iOS 26 ve sonrası, Apple Intelligence destekli cihazlar, iPhone 15 Pro ve sonrası) ışığı ve sahneyi daha zengin cümlelerle anlatabilir. Cihazda çalıştığı için Constitution I ile uyumludur. Ancak iOS 18 ve iPhone 12 desteği (Ek Kısıtlar) nedeniyle yalnızca kural tabanlı kartın **üzerine** isteğe bağlı bir katman olabilir; kart onsuz eksiksiz çalışmalıdır. Serbest metnin kısa ve doğru kalmasının nasıl garanti edileceği ayrıca konuşulacak. **2026-11-24:** Hikâye 9 taslağıyla kapsama alındı: model yalnızca ölçülenleri anlatır (FR-025), her özet deterministik denetimden geçer (FR-027).
 8. **"Ayrıntılar" bölümü:** Hikâye 8 ile kapsama alındı (2026-11-23).
 9–11. Kapatıldı: bkz. Netleştirmeler 5–7 (2026-11-23).
+12. **Özetin başlığı (Hikâye 9, FR-030):** Varsayılan (2026-11-24): başlık "Kısaca" / "In short", altında küçük "Apple Intelligence ile yazıldı" / "Written with Apple Intelligence" notu. Geliştirici değiştirebilir.
+13. **Türkçe desteği:** Varsayılan (2026-11-24): özet yalnızca modelin desteklediği dillerde görünür (`supportsLocale`); desteklenmeyen dilde kart özetsizdir. iPhone 17'de Türkçe sonucu kontrol edilecek.
+14. **Ücretli sınır (Constitution VII):** Varsayılan (2026-11-24): ücretsiz; yine de erişim hakkı soyutlamasından (`exampleSummary`) sorulur.
+
+## Constitution değişikliği
+
+2.1.0 (2026-11-24) olarak işlendi: I (cihazdaki model serbest, Private Cloud Compute yasak), IV (model karar vermez, girdisi ve denetimi beyinde), V (Foundation Models).

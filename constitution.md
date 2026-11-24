@@ -15,6 +15,7 @@ Fotoğraftan anlamayan, Instagram için güzel fotoğraf çekmek isteyen insanla
 
 - Kullanıcıya ait hiçbir veri cihazdan çıkmaz: fotoğraf, referans görüntü, tarif, kullanım bilgisi, cihaz tanımlayıcısı.
 - Kullanıcı verisini işleyen bir sunucu yoktur. Bulut tabanlı yapay zekâ kullanılmaz.
+- Apple'ın cihazdaki dil modeli (Foundation Models, `SystemLanguageModel`) cihazda çalıştığı için kullanılabilir (2.1.0). Apple'ın bulutta çalışan modeli (Private Cloud Compute) kullanıcı verisini cihazdan çıkardığı için kullanılmaz.
 - Uygulama içi analitik, reklam SDK'sı ya da veri toplayan üçüncü taraf kod yoktur. Ölçüm için yalnızca App Store Connect istatistikleri ve Apple'ın kendi kilitlenme raporları kullanılır.
 - İzin verilen tek ağ trafiği:
   - (a) StoreKit üzerinden Apple ile yapılan satın alma işlemleri,
@@ -68,12 +69,14 @@ Fotoğraftan anlamayan, Instagram için güzel fotoğraf çekmek isteyen insanla
   - **Gövde:** kamera bağlantısı, arayüz, kaydetme, paylaşma, satın alma.
 - Beyin modülleri AVFoundation oturumuna, UIKit'e, SwiftUI'ye ya da cihaza bağımlı değildir. Vision ve Core Image kullanabilir, ama testleri macOS üzerinde, cihaz ve simülatör olmadan `swift test` ile çalışmalıdır. Böylece Claude Code beyni kendi başına test edebilir.
 - Beyin girdisini somut bir kamera nesnesinden değil, değer tipi olarak alır: görüntü, derinlik haritası, çekim meta verisi, cihaz yönelimi.
+- Dil modeli kararların hiçbirini vermez: pozlama, beyaz dengesi, yönlendirme, tarif ve okuma beyindedir (2.1.0). Model yalnızca beyin modüllerinin ürettiği sonuçları anlatabilir. Modelin girdisini kuran ve çıktısını denetleyen kod beyindedir ve macOS'ta test edilir; modelin çıktısı test edilmiş bir denetimden geçmeden gösterilmez.
 - Test önce yazılır. Her beyin davranışı, kullanıcının çektiği etiketli **test seti** (spec 00) üzerinde ölçülebilir bir kabul kriteriyle doğrulanır. Bir spec'in kabul kriteri test setiyle ölçülemiyorsa, spec'te nasıl ölçüleceği ayrıca yazılır.
 - Telefonda elle test edilen kısım yalnızca şunlardır: kamera bağlantısı, performans ve kullanım hissi. Her spec bu kısım için kısa bir elle test listesi içerir.
 
 ### V. Önce Apple'ın yerli çerçeveleri
 
 - Arayüz SwiftUI, kamera AVFoundation, görüntü analizi Vision, renk işleme Core Image ile yapılır. Satın alma StoreKit 2, fotoğraf kütüphanesi PhotoKit ile yönetilir.
+- Doğal dil anlatımı Foundation Models ile yapılır (2.1.0). iOS 18'de ve desteklemeyen cihazlarda bu anlatım yoktur; ürün onsuz eksiksizdir (Ek Kısıtlar).
 - Üçüncü taraf kütüphane (özellikle ML) ancak şu koşullar sağlanırsa eklenir:
   - (a) yerli çerçevenin karşılamadığı boşluk ilgili spec'te belgelenmiştir,
   - (b) lisansı ticari kullanıma uygundur,
@@ -155,7 +158,13 @@ Geliştirici, aynı anda GymSpot (Muay Thai için kamerayla eskiv ve form koçlu
   - II: Teknik sayı ve terim yasağı kaldırıldı (geliştiricinin kararı). İlkenin adı "Kullanıcı hiçbir teknik ayar görmez" iken "Kullanıcı hiçbir teknik ayar yapmaz" oldu. Çekim kontrolleri kapalı listesi değişmedi: değerler gösterilebilir, ama kullanıcıya ayarlatılmaz. Yönlendirme cümlelerinin kelime sınırı (VI) aynen geçerli. Kameranın gerçek değerlerini gösteren bir "Ayrıntılar" bölümü artık ilkeye aykırı değil; ama kendi spec'i yazılmadan eklenmez.
   - II: "Örneğin tarifi kartı" bir bilgi ve eylem öğesi olarak eklendi (spec 05 Hikâye 7). **Gerekçe:** Uygulama örnekten parlaklığı, rengi, ışığı ve konuyu zaten çıkarıp kamerayı buna göre ayarlıyor, ama kullanıcı bunu görmüyor; cihaz denemesinde ayarlar hissedilmedi (spec 02, 2026-11-22). "Bu fotoğraf nasıl çekilmiş?" sorusunun cevabı ürünün asıl değeridir. Kart çekimi değiştirmediği için çekim kontrolleri listesi değişmedi.
 
-**Version**: 2.0.0 | **Ratified**: 2026-11-19 | **Last Amended**: 2026-11-23
+- **2.1.0 (2026-11-24, MINOR):**
+  - I: Apple'ın cihazdaki dil modeli kullanılabilir; Private Cloud Compute kullanılmaz.
+  - IV: Dil modeli karar vermez, yalnızca beynin sonuçlarını anlatır; girdisi ve denetimi beyindedir.
+  - V: Doğal dil anlatımı için Foundation Models; iOS 18 ve desteklemeyen cihazlarda özellik yoktur.
+  - **Gerekçe:** Örneğin tarifi kartı (spec 05 Hikâye 9) desteklenen cihazlarda ölçülenleri daha doğal bir dille anlatabilir. Model cihazda çalıştığı için I ihlal edilmez; karar vermediği ve çıktısı denetlendiği için IV'ün test edilebilirlik şartı korunur. Geliştiricinin onayı: 2026-11-24.
+
+**Version**: 2.1.0 | **Ratified**: 2026-11-19 | **Last Amended**: 2026-11-24
 
 ## Açık sorular
 

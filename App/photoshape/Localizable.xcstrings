@@ -154,6 +154,40 @@
         }
       }
     },
+    "card.summary.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Written with Apple Intelligence"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Intelligence ile yazıldı"
+          }
+        }
+      }
+    },
+    "card.summary.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In short"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kısaca"
+          }
+        }
+      }
+    },
     "card.title": {
       "extractionState": "manual",
       "localizations": {

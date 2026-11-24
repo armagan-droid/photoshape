@@ -96,6 +96,7 @@ final class CameraModel {
         self.backend = backend
         self.references = references
         self.entitlements = entitlements
+        references.entitlements = entitlements
     }
 
     /// The look the preview and the saved photo use right now.

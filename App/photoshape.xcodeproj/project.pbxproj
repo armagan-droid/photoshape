@@ -7,10 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		53F8ADED34EB22AA8750447C /* FrameKit in Frameworks */ = {isa = PBXBuildFile; productRef = F9D009BBAFD11BD07F47D7D5 /* FrameKit */; };
-		EEAEB8E6591DF52A49A36A95 /* CaptureKit in Frameworks */ = {isa = PBXBuildFile; productRef = 29AB05B63C731CE7ED24B3D1 /* CaptureKit */; };
 		522469EEEF4DD683144A9F4A /* LookKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8CB61B6C36F11D75B6B36747 /* LookKit */; };
+		53F8ADED34EB22AA8750447C /* FrameKit in Frameworks */ = {isa = PBXBuildFile; productRef = F9D009BBAFD11BD07F47D7D5 /* FrameKit */; };
 		BCEEEF6899C4AC30E1497242 /* CompositionKit in Frameworks */ = {isa = PBXBuildFile; productRef = A7B745198EBA6C1B00425BE1 /* CompositionKit */; };
+		EEAEB8E6591DF52A49A36A95 /* CaptureKit in Frameworks */ = {isa = PBXBuildFile; productRef = 29AB05B63C731CE7ED24B3D1 /* CaptureKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -394,6 +394,10 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
+		2CF5D1620B076FB3BAF72136 /* XCLocalSwiftPackageReference "../Packages/CompositionKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Packages/CompositionKit;
+		};
 		44BE0788185BD4D164F51AE2 /* XCLocalSwiftPackageReference "../Packages/CaptureKit" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../Packages/CaptureKit;
@@ -401,10 +405,6 @@
 		81CD0C2A4C1652ADAEB4E735 /* XCLocalSwiftPackageReference "../Packages/LookKit" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../Packages/LookKit;
-		};
-		2CF5D1620B076FB3BAF72136 /* XCLocalSwiftPackageReference "../Packages/CompositionKit" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../Packages/CompositionKit;
 		};
 		83BFFA927D622D19715A3181 /* XCLocalSwiftPackageReference "../Packages/FrameKit" */ = {
 			isa = XCLocalSwiftPackageReference;

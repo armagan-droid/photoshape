@@ -37,3 +37,17 @@
 - [ ] İkona dokununca kart açılıyor; "Örneği değiştir" ve "Örneksiz çek" çalışıyor
 - [ ] Türkçe ve İngilizce, büyük yazı boyutunda metin taşmıyor; okunamayan satır boş görünmüyor
 - [ ] Kart açıkken kamera cümleleri görünmüyor; kartın ışık maddesi kameradaki ışık yönlendirmesiyle çelişmiyor
+
+## Hikâye 9: Cihazdaki dil modeliyle özet (2026-11-24)
+- [x] T18 Constitution 2.1.0 (I, IV, V); spec 05 Hikâye 9, FR-024..FR-031, SC-018..SC-022, netleştirme 8, açık sorular 12–14 (varsayılanlarla)
+- [x] T19 CompositionKit `ExampleSummaryInput`: kartın gösterdiği satırlardan girdi (gizli satır girmez, sayı yok), sabit talimat metni; testler (SC-018)
+- [x] T20 CompositionKit `SummaryChecker`: uzunluk, cümle sayısı, dil (NaturalLanguage), rakam, desteksiz kelime (ışık yönü/yer ayrımı dahil), konunun adını koyma; 38 elle yazılmış özetle testler (SC-019)
+- [x] T21 Uygulama: `ExampleSummaryWriter` (yalnızca `SystemLanguageModel`, iOS 26+, dil kontrolü, açgözlü + bir yeniden deneme), özet örnekle dil başına saklanır, kart açılınca eksikse yazılır; kartta "Kısaca" + "Apple Intelligence ile yazıldı"; erişim hakkı `exampleSummary`
+- [x] T22 UI testi: denetimden geçen özet görünür, rakamlı özet görünmez; diğer testler modelsiz (`-DisableExampleSummary`) aynen geçer (SC-020)
+- [ ] T23 iPhone 17'de: SC-021 (20 örnek, iki dil), SC-022 (≤ 5 sn, önizleme ≥ 30 kare/sn), uçak modunda üretim, büyük yazı
+
+### Notlar (2026-11-24)
+- Bu Mac'teki sistem modeli (macOS 27.2) Türkçeyi destekliyor (`supportsLocale`). Açık soru 13 için cihazda da bakılacak.
+- Gerçek modelle ölçüm (Mac, 20 olgu kümesi × 2 dil, uygulamanın girdisi ve denetimi): 36/40 denetimden geçti (%90). Ortanca süre 0,5 sn, en uzun 1,4 sn. Reddedilenler gerçek hatalardı: girdide olmayan sol/sağ, 4 cümle.
+- Ölçüm sırasında bulunan ve düzeltilen: önden ışığın talimat metni "fotoğrafçının arkasından" diyordu (model "behind" yazıyordu); "aşağıdan bakılarak" diye olmayan bir açı (artık her zaman reddediliyor); konunun yeri "sağda" iken "ışık sağdan" diyen özet kabul ediliyordu ("-dan/-den" halleri artık yalnızca ışık yönü).
+- Paket testleri: 168 (CompositionKit 72, TestSetKit 42, LookKit 26, CaptureKit 22, FrameKit 6). UI testleri: 12.

@@ -9,6 +9,8 @@ final class ReferenceFlowUITests: XCTestCase {
     private func launch(_ arguments: [String], language: String = "en") -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-AppleLanguages", "(\(language))", "-AppleLocale", language == "tr" ? "tr_TR" : "en_US"] + arguments
+        // The simulator may borrow the Mac's language model; tests stay the same with or without it (SC-020).
+        if !arguments.contains("-UITestSummary") { app.launchArguments += ["-DisableExampleSummary", "YES"] }
         app.launch()
         return app
     }
@@ -96,6 +98,25 @@ final class ReferenceFlowUITests: XCTestCase {
         XCTAssertLessThanOrEqual(app.descendants(matching: .any).matching(identifier: "card.step").count, 3)
         XCTAssertFalse(app.descendants(matching: .any)["status"].exists)
         XCTAssertTrue(app.buttons["Çekime başla"].exists)
+    }
+
+    /// Hikâye 9: a summary that passes the check is shown at the top, marked as written with Apple Intelligence;
+    /// one that fails it (digits) is not shown, and the card is otherwise unchanged.
+    func testCardShowsACheckedSummaryOnly() {
+        var app = launch(["-ResetReferences", "YES", "-UITestReference", "03-moody-table.jpg",
+                          "-UITestSummary", "Bu fotoğrafta sahne sade ve konu açıkça görülüyor."], language: "tr")
+        let summary = app.descendants(matching: .any)["card.summary.text"]
+        XCTAssertTrue(summary.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Kısaca"].exists)
+        XCTAssertTrue(app.staticTexts["Apple Intelligence ile yazıldı"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["card.line.tone"].exists)
+        app.terminate()
+
+        app = launch(["-ResetReferences", "YES", "-UITestReference", "03-moody-table.jpg",
+                      "-UITestSummary", "Bu fotoğraf ISO 64 ile çekilmiş."], language: "tr")
+        XCTAssertTrue(app.buttons["card.start"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.descendants(matching: .any)["card.line.tone"].exists)
+        XCTAssertFalse(app.descendants(matching: .any)["card.summary"].waitForExistence(timeout: 3))
     }
 
     /// Hikâye 8: a photo with camera data shows its shutter speed and ISO; one without shows only the estimates.

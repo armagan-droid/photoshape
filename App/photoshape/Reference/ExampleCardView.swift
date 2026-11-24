@@ -20,6 +20,7 @@ struct ExampleCardView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     header
+                    if let summary = store.summary(for: reference.id) { SummaryView(text: summary) }
                     VStack(alignment: .leading, spacing: 14) {
                         ForEach(reading.lines, id: \.topic) { line in
                             LineRow(line: line).accessibilityIdentifier("card.line.\(line.topic.rawValue)")
@@ -42,6 +43,8 @@ struct ExampleCardView: View {
         .preferredColorScheme(.dark)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("exampleCard")
+        // Older examples and a changed language get their summary when the card is opened (FR-028, 9.5).
+        .task { store.summarize(reference.id) }
     }
 
     private var header: some View {
@@ -124,5 +127,23 @@ private struct LineRow: View {
         case .angle: "camera.viewfinder"
         case .subject: "viewfinder.rectangular"
         }
+    }
+}
+
+/// "Kısaca": the on-device model's summary, marked as written with Apple Intelligence (spec 05 FR-030).
+private struct SummaryView: View {
+    let text: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("card.summary.title").font(.headline)
+            Text(text).fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("card.summary.text")
+            Label("card.summary.note", systemImage: "sparkles")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("card.summary")
     }
 }

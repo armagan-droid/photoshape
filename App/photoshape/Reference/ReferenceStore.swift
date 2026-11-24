@@ -23,6 +23,8 @@ final class ReferenceStore {
         var angle: ShotAngleEstimate?
         /// Shutter, aperture, ISO… from the photo's own camera data (spec 05 Hikâye 8). Nil for screenshots.
         var settings: ExampleSettings?
+        /// Short summary by the on-device model, per language ("tr", "en") (spec 05 Hikâye 9, FR-028).
+        var summaries: [String: String]?
 
         /// Approximate values read from the picture (spec 05 FR-020).
         var measurements: ExampleMeasurements { ExampleMeasurements(stats: profile.stats) }
@@ -43,6 +45,10 @@ final class ReferenceStore {
     /// Incremented each time the user picks an example (new or from the list), not at launch: opens the card
     /// (spec 05 Hikâye 7.1).
     private(set) var selectionCount = 0
+    /// Set by the camera model: the summary is asked of the single entitlement question (Constitution VII).
+    var entitlements: Entitlements = AllUnlocked()
+    /// Examples whose summary is being written now; one at a time, never in the live loop (FR-029).
+    private var summarizing: Set<String> = []
 
     private let directory: URL
     private let defaults: UserDefaults
@@ -134,6 +140,34 @@ final class ReferenceStore {
         Diagnostics.log("reference added: meanL \(profile.stats.meanL), chroma \(profile.stats.meanChroma), neutralB \(profile.stats.neutralB ?? .nan), subject \(result.subject?.kind.rawValue ?? "none"), angle \(String(describing: result.angle)), light \(String(describing: result.light))")
         Diagnostics.log("settings: \(String(describing: result.settings))")
         Diagnostics.log("reading: \(reference.reading.lines.flatMap(\.phraseKeys)) steps \(reference.reading.steps)")
+        summarize(reference.id)
+    }
+
+    // MARK: - Summary (spec 05 Hikâye 9)
+
+    /// The app's language: the summary is written and shown in it (9.5).
+    static var language: String { Bundle.main.preferredLocalizations.first == "tr" ? "tr" : "en" }
+
+    /// Read from the stored list, so an open card shows the summary as soon as it is written (9.1).
+    func summary(for id: UUID) -> String? { references.first { $0.id == id }?.summaries?[Self.language] }
+
+    /// Writes the summary in the app's language if it is missing. Safe to call often: once per example and
+    /// language at a time; a failed attempt is simply not stored (the card shows no summary).
+    func summarize(_ id: UUID) {
+        let language = Self.language
+        guard entitlements.isAvailable(.exampleSummary),
+              let reference = references.first(where: { $0.id == id }), reference.summaries?[language] == nil else { return }
+        let key = "\(id.uuidString)-\(language)"
+        guard !summarizing.contains(key) else { return }
+        summarizing.insert(key)
+        let input = ExampleSummaryInput(reading: reference.reading, language: language)
+        Task {
+            let text = await Task.detached(priority: .background) { await ExampleSummaryWriter.write(input) }.value
+            summarizing.remove(key)
+            guard let text, let index = references.firstIndex(where: { $0.id == id }) else { return }
+            references[index].summaries = (references[index].summaries ?? [:]).merging([language: text]) { $1 }
+            saveIndex()
+        }
     }
 
     // MARK: - Files
