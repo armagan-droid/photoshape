@@ -51,6 +51,8 @@ final class CaptureFlowUITests: XCTestCase {
         XCTAssertEqual(image.frame.width / image.frame.height, 4.0 / 5.0, accuracy: 0.01, "saved/shared photo is 4:5")
         XCTAssertTrue(app.buttons["share"].exists)
         XCTAssertTrue(app.buttons["share"].label.contains("Share"))
+        // Spec 07 Hikâye 1.4: no Instagram in the simulator, so only the system share button.
+        XCTAssertFalse(app.buttons["instagram"].exists)
         app.buttons["close"].tap()
         XCTAssertTrue(app.buttons["shutter"].waitForExistence(timeout: 5))
     }
@@ -120,5 +122,22 @@ final class CaptureFlowUITests: XCTestCase {
         app.buttons["dev.freeze"].tap()
         XCTAssertTrue(app.buttons["dev.freeze"].label == "Live" || app.buttons["Live"].waitForExistence(timeout: 3),
                       "frozen frame can go back to live")
+    }
+
+    /// Spec 07 Hikâye 1: with Instagram, one button offers Post (and Story with an app ID); when Instagram's way does
+    /// not work (here: not really installed) the system share sheet opens instead of an error (1.5).
+    func testInstagramOffersPostAndFallsBackToTheShareSheet() {
+        let app = launch("en", arguments: ["-UITestInstagramInstalled", "YES"])
+        takePhoto(app)
+        app.buttons["lastPhoto"].tap()
+        let instagram = app.buttons["instagram"]
+        XCTAssertTrue(instagram.waitForExistence(timeout: 5))
+        instagram.tap()
+        let post = app.buttons.matching(identifier: "Post").firstMatch
+        XCTAssertTrue(post.waitForExistence(timeout: 3), "two taps to the post screen (SC-001)")
+        XCTAssertFalse(app.buttons["Story"].exists, "no Story without a Meta app ID")
+        post.tap()
+        XCTAssertTrue(app.otherElements["ActivityListView"].waitForExistence(timeout: 5) || app.navigationBars["UIActivityContentView"].waitForExistence(timeout: 2)
+                      || app.collectionViews.cells.count > 0, "falls back to the share sheet")
     }
 }

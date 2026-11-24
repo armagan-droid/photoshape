@@ -5,6 +5,8 @@ struct ReviewView: View {
     let capture: CameraModel.LastCapture
     @Environment(\.dismiss) private var dismiss
     @State private var hint = RevertHint()
+    @State private var choosingInstagram = false
+    @State private var fallbackShare = false
 
     var body: some View {
         NavigationStack {
@@ -26,6 +28,7 @@ struct ReviewView: View {
                         .accessibilityIdentifier("revertHint")
                 }
                 Spacer(minLength: 0)
+                if InstagramShare.isInstalled { instagramButton }
                 ShareLink(item: capture.shareURL,
                           preview: SharePreview(Text("share.previewTitle"), image: Image(uiImage: capture.thumbnail))) {
                     Label("share.button", systemImage: "square.and.arrow.up")
@@ -47,8 +50,41 @@ struct ReviewView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .confirmationDialog("share.instagram", isPresented: $choosingInstagram, titleVisibility: .hidden) {
+            Button("share.instagram.post") { Task { await share { await InstagramShare.sharePost(assetID: capture.assetID) } } }
+                .accessibilityIdentifier("instagram.post")
+            if InstagramShare.canShareStory {
+                Button("share.instagram.story") { Task { await share { await InstagramShare.shareStory(photoAt: capture.shareURL) } } }
+                    .accessibilityIdentifier("instagram.story")
+            }
+        }
+        .sheet(isPresented: $fallbackShare) {
+            ActivitySheet(items: [capture.shareURL]).presentationDetents([.medium, .large])
+        }
         .onAppear { hint.evaluate(revertible: capture.revertible) }
         .onChange(of: capture.revertible) { _, revertible in hint.evaluate(revertible: revertible) }
+    }
+}
+
+extension ReviewView {
+    /// Two taps to Instagram's post screen (spec 07 SC-001): this button, then "Post".
+    var instagramButton: some View {
+        Button { choosingInstagram = true } label: {
+            Label("share.instagram", systemImage: "camera.circle")
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(LinearGradient(colors: [.purple, .pink, .orange], startPoint: .leading, endPoint: .trailing), in: Capsule())
+                .foregroundStyle(.white)
+        }
+        .accessibilityIdentifier("instagram")
+        .padding(.horizontal, 32)
+        .padding(.bottom, 8)
+    }
+
+    /// Instagram's way first; the system share sheet when it does not work (Hikâye 1.5).
+    func share(_ attempt: () async -> Bool) async {
+        if await !attempt() { fallbackShare = true }
     }
 }
 

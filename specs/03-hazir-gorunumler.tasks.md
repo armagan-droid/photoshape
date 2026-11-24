@@ -17,7 +17,7 @@
 - [x] T12 Geliştirici ekranı (Hikâye 4, 2026-11-24): yalnızca `#if DEBUG`; deklanşörün sağındaki düğmeyle açılır. Tüm parametreler (ton, renk, 8 renk aralığı × ton/doygunluk/parlaklık, bölünmüş tonlama, gren, vinyet) adlı ve sayılı kaydırıcılarla, canlı önizlemede; kareyi dondurma ve galeriden görüntü açma; uygulamanın tarif formatında `.look.json` paylaşım menüsüyle dışa aktarma (göndermeden önce yeniden okunarak doğrulanır) ve dosyadan içe alma. UI testi
 - [ ] Geliştirici ekranından AirDrop ile Mac'e gönderme ve tekrar içe alma (cihazda)
 - [x] T13 Lisans kontrolü (FR-009, 2026-11-24): LookKit `LicenseCheck` — görünüm klasöründeki her görsel, lisans kaydı tam olan bir tarifin örneği olmalı; tarifin adını verdiği ama olmayan görsel de hata. `scripts/check-licenses.sh` (`look-tool check-licenses`); `--release` yer tutucu görselleri de reddeder (açık soru 1: yer tutucuyla App Store'a çıkılmaz) — arşivden önce çalıştırılır. Paket testi her `scripts/test.sh` çalışmasında klasörü denetler
-- [ ] T14 Derinlikli bulanıklık: kayıtta, sonra önizlemede; performans ölçümü
+- [ ] T14 Derinlikli bulanıklık: kayıtta, sonra önizlemede; performans ölçümü — **ertelendi (2026-11-24):** şu an hiçbir tarif bulanıklık istemiyor (beş hazır tarif `blur: none`, örnekten çıkan tarif bulanıklık alanını doldurmuyor). Önce örnekten bulanıklık isteğinin nasıl çıkarılacağı (ör. arka plan keskinliği, f/ değeri) spec 05'te yazılmalı; yoksa kod ölü kalır
 - [x] T15 UI testleri: görünüm değiştirme, güç, hatırlama, kilit
 
 ## Notlar

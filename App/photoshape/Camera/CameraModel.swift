@@ -19,6 +19,8 @@ final class CameraModel {
         let shareURL: URL
         /// Saved with the 4:5 edit attached, so Photos can revert to the full frame (Hikâye 4.3).
         var revertible = false
+        /// Library identifier once saved: Instagram Feed opens the photo by it (spec 07 Hikâye 1.2).
+        var assetID: String?
     }
 
     struct Notice: Identifiable, Equatable {
@@ -354,8 +356,11 @@ final class CameraModel {
                 lastCapture = capture
 
                 switch await PhotoLibrarySaver.save(processed, formatIdentifier: AppInfo.bundleIdentifier) {
-                case .saved(let revertible):
-                    if revertible, lastCapture?.id == capture.id { lastCapture?.revertible = true }
+                case .saved(let revertible, let assetID):
+                    if lastCapture?.id == capture.id {
+                        if revertible { lastCapture?.revertible = true }
+                        lastCapture?.assetID = assetID
+                    }
                 case .denied: show(.saveDenied)
                 case .failed: show(.saveFailed)
                 }

@@ -4,3 +4,7 @@ DEVELOPMENT_TEAM = KZH2L97JP8
 MARKETING_VERSION = 0.1.0
 CURRENT_PROJECT_VERSION = 1
 IPHONEOS_DEPLOYMENT_TARGET = 18.0
+// Extra Info.plist keys merged into the generated one (spec 07: Instagram URL schemes).
+INFOPLIST_FILE = Config/Info.plist
+// Meta app ID for Instagram Stories sharing (spec 07 Hikâye 1.3). Empty until one is registered.
+FACEBOOK_APP_ID =

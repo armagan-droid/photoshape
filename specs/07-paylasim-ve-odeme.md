@@ -1,6 +1,10 @@
 # Spec 07 — Instagram'a paylaşım, ödeme ekranı ve görünüm paketleri
 
 > `/speckit.specify` girdisi. Sürüm: **v2** (spec 05 ile birlikte). Bağımlılık: 01, 03 (erişim hakkı soyutlaması), 05 (kota). Plan aşamasında bu spec ikiye bölünebilir: 07a paylaşım, 07b ödeme ve paketler.
+>
+> **2026-11-24, yön değişikliğine uyum (README 2026-11-21):** Görünüm şeridi ve görünüm seçimi artık yok; kullanıcı örnek fotoğrafla çeker (spec 05). Bu yüzden **premium = sınırsız örnek** (spec 05 Hikâye 5: ücretsizde kayan 7 günde 3 örnek) + ileride örnek/görünüm paketleri. Hikâye 2 buna göre okunur: kilit işareti görünümde değil, kotası dolmuş kullanıcının yeni örnek eklemesindedir; ödeme ekranı dördüncü örnekte açılır. Kamera, çekim, kaydetme, daha önce eklenmiş örnekler ve ücretsiz kota hiçbir zaman kilitlenmez (FR-010). Plan iki parçaya bölündü: 07a paylaşım, 07b ödeme ve kota. Paketler (Hikâye 4–5, P2–P3) barındırma ve imzalama kararı verilene kadar sonraya kaldı.
+>
+> **Açık sorulara varsayılanlar (2026-11-24, geliştirici değiştirebilir):** 1 deneme yok ("dürüst fiyat" mesajıyla uyumlu); 2 fiyatlar App Store Connect'te (öneri aynen: yıllık 19,99 $, ömür boyu 39,99 $; Türkiye için App Store'un bölgesel önerisi); 3 Aile Paylaşımı açık; 4 Hikâye boşluğu bulanık fotoğrafla doldurulur; 5 "düzenli olarak"; 6 görünüm şeridi olmadığı için geçersiz; 7 açıklama metni yayından önce gözden geçirilecek. **Hikâye paylaşımı Meta uygulama kimliği ister** (`FACEBOOK_APP_ID`, Config/Base.xcconfig): kimlik girilene kadar yalnızca Gönderi seçeneği görünür.
 
 ## Ne ve neden
 

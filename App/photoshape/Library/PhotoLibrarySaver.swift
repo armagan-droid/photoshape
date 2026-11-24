@@ -4,7 +4,8 @@ import UniformTypeIdentifiers
 
 enum SaveOutcome: Sendable, Equatable {
     /// `revertible`: the 4:5 edit was attached, so Photos can return to the full frame.
-    case saved(revertible: Bool)
+    /// `assetID`: the photo's library identifier, for sharing it to Instagram (spec 07 Hikâye 1.2).
+    case saved(revertible: Bool, assetID: String?)
     /// The user declined "add photos" access.
     case denied
     /// Saving failed for another reason (e.g. storage full).
@@ -23,11 +24,13 @@ enum PhotoLibrarySaver {
         do { recordData = try capture.record.encoded() } catch { return .failed }
 
         let editAttached = Flag()
+        let assetID = Box()
         do {
             try await PHPhotoLibrary.shared().performChanges {
                 let request = PHAssetCreationRequest.forAsset()
                 request.addResource(with: .photo, data: capture.original, options: nil)
                 guard let placeholder = request.placeholderForCreatedAsset else { return }
+                assetID.value = placeholder.localIdentifier
                 let output = PHContentEditingOutput(placeholderForCreatedAsset: placeholder)
                 output.adjustmentData = PHAdjustmentData(formatIdentifier: formatIdentifier,
                                                          formatVersion: EditRecord.formatVersion, data: recordData)
@@ -38,11 +41,20 @@ enum PhotoLibrarySaver {
                 editAttached.set()
             }
             Diagnostics.log("saved (\(status == .limited ? "limited" : "authorized")); 4:5 edit attached: \(editAttached.value), type \(capture.editedType.identifier)")
-            return .saved(revertible: editAttached.value)
+            return .saved(revertible: editAttached.value, assetID: assetID.value)
         } catch {
             Diagnostics.log("save failed: \(error)")
             return .failed
         }
+    }
+}
+
+private final class Box: @unchecked Sendable {
+    private let lock = NSLock()
+    private var stored: String?
+    var value: String? {
+        get { lock.withLock { stored } }
+        set { lock.withLock { stored = newValue } }
     }
 }
 
