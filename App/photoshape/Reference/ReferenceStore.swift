@@ -131,7 +131,13 @@ final class ReferenceStore {
             let subject = SubjectDetector.detect(in: upright)
             // Finer grid for the card's light character (spec 05 FR-013); the middle stands in without a subject.
             let light = LuminanceGrid(image: upright).flatMap { LightAnalyzer.readExample($0, subject: subject?.box) }
-            return Analysis(profile: ReferenceProfile(sample: sample), subject: subject, light: light,
+            // People's skin stays out of the colors (FR-004, Hikâye 4): only when the example has a person.
+            let skin = subject?.kind == .person
+                ? PersonMask.grid(for: upright, width: SceneSample.gridWidth, height: SceneSample.gridHeight)
+                    .map { SkinTone.skinCells(colors: sample.colors, personMask: $0) }
+                : nil
+            if let skin { Diagnostics.log("skin cells left out: \(skin.filter { $0 }.count) of \(skin.count)") }
+            return Analysis(profile: ReferenceProfile(sample: sample, excluding: skin), subject: subject, light: light,
                             angle: ShotAngleEstimator.estimate(in: upright),
                             settings: settings,
                             aspect: Double(upright.width) / Double(max(upright.height, 1)),

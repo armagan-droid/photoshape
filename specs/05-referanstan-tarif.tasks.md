@@ -18,8 +18,9 @@
 - [x] 2. adım: ekran görüntüsünde uygulama arayüzünü ayıklama (FR-003) (2026-11-24): LookKit `ScreenshotCrop` — boy/en ≥ 1,7 ve kamera bilgisi yoksa; arayüz rengi üst/alt şeritten (açık ve koyu tema), saf arka plan satırlarıyla ayrılan ve çoğu satırı içerikle dolu en uzun bant fotoğraftır; profil satırı ve düğmeler banda katılmaz; kare / 4:5 / 1,91:1'e %6 içinde oturtulur. 11 çizilmiş ekran görüntüsünde örtüşme ≥ %95 (SC-003'ün sentetik kısmı); normal fotoğraf ve fotoğrafsız ekran olduğu gibi kalır. Örnek eklenirken istatistik, konu, açı, ışık, taslak ve ikon kırpılmış fotoğraftan yapılır
 - [ ] SC-003 gerçek ekran görüntüleriyle (≥ 20; açık/koyu, tekli/atlıkarınca; açık soru 1: yalnızca kendi ya da izinli hesaplar). Bilinen risk: neredeyse tamamen siyah satırları olan karanlık fotoğraflar koyu temada bölünebilir
 - [ ] 3. adım: örneğe göre açı, mesafe ve ışık yönlendirmesi (spec 04; test seti gerekli)
-- [ ] Parlak alan korunarak parlaklık hedefi (spec 02 FR-002 öncelik sırası)
-- [ ] Cilt ayırma (FR-004)
+- [x] Parlak alan korunarak parlaklık hedefi (spec 02 FR-002 öncelik sırası): spec 02 1. dilim `ExposureDecider` ile yapıldı (2026-11-22)
+- [x] Cilt ayırma (FR-004) (2026-11-24): yerli alternatif (FR-004 d) — örnekte kişi varsa Vision kişi maskesi (`VNGeneratePersonSegmentationRequest`, durağan görüntüde çalışır) ∩ ten rengi (YCbCr, açıktan koyuya) hücreler renk istatistiğinden çıkarılır; karenin en az %25'i kalmazsa hiçbir şey çıkarılmaz. Maske dışındaki ten rengi (latte, ahşap) ve maske içindeki ten olmayan (kıyafet) kalır. SC-004 sentetik: nötr kafe sahnesine eşleşmede sıcaklık belirgin azalıyor. MediaPipe eklenmedi; gerçek portrelerle SC-004 sağlanmazsa yeniden değerlendirilecek
+- [ ] SC-004 gerçek ten ağırlıklı örneklerle (cihazda: Vision kişi maskesi simülatörde çalışmıyor olabilir; teşhis satırı "skin cells left out")
 
 ## Elle (iPhone 17)
 - [ ] Gerçek bir örnek fotoğrafla: canlı görüntü örneğe yaklaşıyor mu, titreme var mı, kayıt ekranla aynı mı

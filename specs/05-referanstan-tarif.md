@@ -147,7 +147,7 @@ Model **yeni bilgi üretmez, yalnızca anlatır.** Girdisi uygulamanın okuması
   - (b) ağ erişiminin olmaması,
   - (c) uygulama boyutuna etkisi,
   - (d) Vision ile yetinilen basit bir alternatifin (yüz ve el algılama + kişi maskesi) karşılaştırmalı sonucu.
-  Yerli alternatif SC-004'ü sağlıyorsa üçüncü taraf kütüphane eklenmez.
+  Yerli alternatif SC-004'ü sağlıyorsa üçüncü taraf kütüphane eklenmez. **2026-11-24:** Önce yerli alternatif uygulandı: Vision kişi maskesi ∩ ten rengi. Sentetik SC-004 geçiyor; gerçek portrelerle ölçüm bekleniyor. MediaPipe eklenmedi (a–c belgelenmedi, gerek kalmadı).
 - **FR-005:** Referans görüntü ve çıkarılan tarif cihazdan çıkmaz (Constitution I).
 - **FR-006:** Kota, erişim hakkı soyutlaması üzerinden sorulur (Constitution VII). Sayaç Keychain'de tutulur.
 - **FR-007:** Kullanıcının örnekleri "Örneklerim" listesinde durur (küçük ikon). Hazır görünüm şeridi yoktur (2026-11-21). Kamera ve işleme açısından örnekten çıkan tarif ile diğer tarifler arasında fark yoktur.
