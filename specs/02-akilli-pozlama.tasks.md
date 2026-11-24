@@ -15,6 +15,7 @@
 
 ## Sonraki
 - [ ] Beyaz dengesi cihazda: sarı lamba altında beyaz tabak "hafif sıcak beyaz" mı, lamba açılıp kapanınca önizleme sıçramadan geçiyor mu; `keptWarmth` değerini ayarla
-- [ ] Karışık ışıkta konuya göre beyaz dengesi (Hikâye 3.2): şu an tüm kare için iOS'un kararı kullanılıyor
+- [x] T10 Karışık ışıkta konuya göre beyaz dengesi (Hikâye 3.2, 2026-11-24): `WhiteBalanceDecider.mixedLight` canlı karede (görünümden önce) konunun içindeki ve dışındaki parlak, griye yakın yüzeylerin b* farkını okur; > 8 ise karışık ışık. `gains(for:)` konunun gri yüzeylerindeki kaymanın %70'ini kaldıran kanal kazancını bulur (FR-003 gibi tamamen nötrlemez). Görünümün `temperature` ölçeği (±%10) güçlü lamba kaymasına yetmediği için LookKit'e tariften bağımsız `ChannelGains` aşaması eklendi (doğrusal ışıkta, parlaklık korunur); önizleme ve kayıt aynı kazancı kullanır (FR-005), basılı tutunca kalkar, örnek seçiliyken kullanılmaz; yumuşak geçiş. Testler: lamba altındaki tabak yarıdan fazla soğur ama nötr olmaz, tek ışıkta kazanç yok, pencere altındaki konu ısınır, renderer ile beynin tahmini ΔE < 1,5
+- [ ] Karışık ışık cihazda: pencere + lamba masasında konu değişince geçiş yumuşak mı; turuncu yemek "gri yüzey" sayılıyor mu (a* sınırı 10)
 - [ ] Test setinde SC-001…SC-005 ölçümü (spec 00 kareleri gerekli)
 - [ ] Ters ışık / loş cihaz denemeleri (SC-004, SC-007), kör karşılaştırma (SC-008)

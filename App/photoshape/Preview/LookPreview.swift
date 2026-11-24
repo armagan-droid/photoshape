@@ -9,6 +9,8 @@ struct LookPreview: UIViewRepresentable {
     let source: () -> CIImage?
     let look: LookRecipe
     let strength: Double
+    /// White balance before the look (spec 02 Hikâye 3.2); the saved photo gets the same.
+    var gains: ChannelGains = .neutral
     let renderer: LookRenderer
     /// View point, for tap to focus.
     let onTap: (CGPoint, CGSize) -> Void
@@ -37,7 +39,7 @@ struct LookPreview: UIViewRepresentable {
     }
 
     func updateUIView(_ view: MTKView, context: Context) {
-        context.coordinator.update(source: source, look: look, strength: strength, onTap: onTap)
+        context.coordinator.update(source: source, look: look, strength: strength, gains: gains, onTap: onTap)
         context.coordinator.onHold = onHold
     }
 
@@ -50,6 +52,7 @@ struct LookPreview: UIViewRepresentable {
         private var source: () -> CIImage? = { nil }
         private var look = LookRecipe.natural
         private var strength = 0.0
+        private var gains = ChannelGains.neutral
         private var onTap: (CGPoint, CGSize) -> Void = { _, _ in }
         var onHold: (Bool) -> Void = { _ in }
 
@@ -67,8 +70,9 @@ struct LookPreview: UIViewRepresentable {
             context = device.map { CIContext(mtlDevice: $0, options: [.cacheIntermediates: false]) }
         }
 
-        func update(source: @escaping () -> CIImage?, look: LookRecipe, strength: Double, onTap: @escaping (CGPoint, CGSize) -> Void) {
-            self.source = source; self.look = look; self.strength = strength; self.onTap = onTap
+        func update(source: @escaping () -> CIImage?, look: LookRecipe, strength: Double, gains: ChannelGains,
+                    onTap: @escaping (CGPoint, CGSize) -> Void) {
+            self.source = source; self.look = look; self.strength = strength; self.gains = gains; self.onTap = onTap
         }
 
         @MainActor @objc func tapped(_ recognizer: UITapGestureRecognizer) {
@@ -91,7 +95,7 @@ struct LookPreview: UIViewRepresentable {
             let dx = (scaled.extent.width - size.width) / 2, dy = (scaled.extent.height - size.height) / 2
             let framed = scaled.transformed(by: CGAffineTransform(translationX: -dx, y: -dy))
                 .cropped(to: CGRect(origin: .zero, size: size))
-            let output = renderer.render(framed, recipe: look, strength: strength)
+            let output = renderer.render(framed, recipe: look, strength: strength, gains: gains)
 
             let destination = CIRenderDestination(width: Int(size.width), height: Int(size.height),
                                                   pixelFormat: view.colorPixelFormat, commandBuffer: buffer) { drawable.texture }

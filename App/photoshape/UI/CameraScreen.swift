@@ -116,7 +116,7 @@ struct CameraScreen: View {
 
     private var preview: some View {
         LookPreview(source: model.backend.latestPreviewImage, look: model.currentLook,
-                    strength: 1, renderer: model.renderer, onTap: { point, size in
+                    strength: 1, gains: model.currentGains, renderer: model.renderer, onTap: { point, size in
             model.tapToFocus(viewPoint: point, viewSize: size)
         }, onHold: model.setComparing)
         .aspectRatio(3.0 / 4.0, contentMode: .fit)

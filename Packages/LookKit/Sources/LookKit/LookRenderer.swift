@@ -18,11 +18,21 @@ public final class LookRenderer: @unchecked Sendable {
 
     /// - Parameters:
     ///   - effects: grain and vignette; turned off only by tests that measure the color transform alone.
-    public func render(_ image: CIImage, recipe: LookRecipe, strength: Double, effects: Bool = true) -> CIImage {
-        let s = (min(1, max(0, strength)) / Self.strengthStep).rounded() * Self.strengthStep
-        guard s > 0 else { return image }
-        let a = recipe.adjustments.scaled(by: s)
+    ///   - gains: white balance before the look (spec 02 Hikâye 3.2); applied in Core Image's linear working space.
+    public func render(_ image: CIImage, recipe: LookRecipe, strength: Double, gains: ChannelGains = .neutral,
+                       effects: Bool = true) -> CIImage {
         var out = image
+        if !gains.isNeutral, let matrix = CIFilter(name: "CIColorMatrix") {
+            let n = CGFloat(gains.norm)
+            matrix.setValue(out, forKey: kCIInputImageKey)
+            matrix.setValue(CIVector(x: CGFloat(gains.red) / n, y: 0, z: 0, w: 0), forKey: "inputRVector")
+            matrix.setValue(CIVector(x: 0, y: 1 / n, z: 0, w: 0), forKey: "inputGVector")
+            matrix.setValue(CIVector(x: 0, y: 0, z: CGFloat(gains.blue) / n, w: 0), forKey: "inputBVector")
+            if let result = matrix.outputImage { out = result.cropped(to: image.extent) }
+        }
+        let s = (min(1, max(0, strength)) / Self.strengthStep).rounded() * Self.strengthStep
+        guard s > 0 else { return out }
+        let a = recipe.adjustments.scaled(by: s)
 
         if a.hasPointwiseChange, let cube = CIFilter(name: "CIColorCubeWithColorSpace") {
             cube.setValue(out, forKey: kCIInputImageKey)

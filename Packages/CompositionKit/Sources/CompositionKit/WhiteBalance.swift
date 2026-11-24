@@ -1,4 +1,6 @@
+import CoreGraphics
 import Foundation
+import LookKit
 
 /// White balance that leaves some of a warm room's warmth (spec 02 FR-003, Hikâye 3).
 ///
@@ -54,5 +56,65 @@ public enum WhiteBalanceDecider {
         let r = 3.2406 * X - 1.5372 * Y - 0.4986 * Z
         let b = 0.0557 * X - 0.2040 * Y + 1.0570 * Z
         return r / max(b, 1e-6)
+    }
+}
+
+// MARK: - Mixed light (spec 02 Hikâye 3.2, FR-007)
+
+extension WhiteBalanceDecider {
+    public struct MixedLight: Sendable, Hashable {
+        /// Mean b* (yellow +, blue −) of the bright, nearly gray surfaces on the subject and around it.
+        public var subjectCast: Double
+        public var surroundCast: Double
+        /// The subject is lit by another color of light than the rest (window on one side, lamp on the other).
+        public var isMixed: Bool
+        /// Mean color (gamma sRGB) of the subject's nearly gray surfaces.
+        public var subjectColor: SIMD3<Double>
+    }
+
+    /// b* difference between subject and surroundings that counts as two kinds of light.
+    static let mixedDifference = 8.0
+
+    /// Reads the color of the light on the subject against the rest, from the frame before the look.
+    /// Nil when there are too few nearly gray surfaces to tell.
+    public static func mixedLight(colors: [SIMD3<Double>], width: Int, height: Int, subject: CGRect) -> MixedLight? {
+        guard colors.count == width * height, width > 0 else { return nil }
+        var inside: [Double] = [], outside: [Double] = [], insideColor = SIMD3<Double>(0, 0, 0)
+        for y in 0..<height {
+            for x in 0..<width {
+                let lab = ColorScience.lab(fromSRGB: (colors[y * width + x].x, colors[y * width + x].y, colors[y * width + x].z))
+                // Whites and light grays: under a lamp they turn yellow (b* up to ~35) but stay off the red–green axis;
+                // orange food has a clearly positive a* and is left out.
+                guard lab.l > 45, abs(lab.a) < 10, abs(lab.b) < 40 else { continue }
+                let p = CGPoint(x: (Double(x) + 0.5) / Double(width), y: (Double(y) + 0.5) / Double(height))
+                if subject.contains(p) { inside.append(lab.b); insideColor += colors[y * width + x] } else { outside.append(lab.b) }
+            }
+        }
+        guard inside.count >= 4, outside.count >= 8 else { return nil }
+        let s = inside.reduce(0, +) / Double(inside.count), o = outside.reduce(0, +) / Double(outside.count)
+        return MixedLight(subjectCast: s, surroundCast: o, isMixed: abs(s - o) > mixedDifference,
+                          subjectColor: insideColor / Double(inside.count))
+    }
+
+    /// Share of the subject's own cast that is removed in mixed light; the rest stays, like FR-003's warmth.
+    static let mixedCorrection = 0.7
+
+    /// White balance gains for a mixed-light scene: they follow the subject (Hikâye 3.2), the background may keep
+    /// its other color. Neutral when the light is not mixed. The gains are found on the subject's own gray
+    /// surfaces, so a lamp-yellow plate ends up only slightly warm.
+    public static func gains(for mixed: MixedLight?) -> ChannelGains {
+        guard let mixed, mixed.isMixed else { return .neutral }
+        let target = mixed.subjectCast * (1 - mixedCorrection)
+        func b(_ k: Double) -> Double {
+            let c = ChannelGains(coolingRatio: k).apply(mixed.subjectColor)
+            return ColorScience.lab(fromSRGB: (c.x, c.y, c.z)).b
+        }
+        // b* falls as k grows (more blue, less red): bisection in log space.
+        var lo = log(0.25), hi = log(4.0)
+        for _ in 0..<40 {
+            let mid = (lo + hi) / 2
+            if b(exp(mid)) > target { lo = mid } else { hi = mid }
+        }
+        return ChannelGains(coolingRatio: exp((lo + hi) / 2))
     }
 }

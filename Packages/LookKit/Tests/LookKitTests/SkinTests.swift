@@ -1,3 +1,4 @@
+import CoreImage
 import Foundation
 import Testing
 @testable import LookKit
@@ -58,5 +59,32 @@ struct SkinTests {
         let all = Array(repeating: true, count: 100)
         #expect(ReferenceProfile(sample: SceneSample(colors: colors, cornerRatio: 1), excluding: all)
                 == ReferenceProfile(sample: SceneSample(colors: colors, cornerRatio: 1)))
+    }
+}
+
+
+@Suite("White balance gains before the look (spec 02 Hikâye 3.2, FR-005)")
+struct ChannelGainsTests {
+    /// The renderer (preview and saved photo) and the brain's estimate agree.
+    @Test func rendererMatchesTheEstimate() throws {
+        let gains = ChannelGains(coolingRatio: 1.6)
+        let color = SIMD3(0.86, 0.78, 0.55)
+        let image = CIImage(color: CIColor(red: color.x, green: color.y, blue: color.z, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)!)
+            .cropped(to: CGRect(x: 0, y: 0, width: 4, height: 4))
+        let out = LookRenderer().render(image, recipe: try LookCatalog.bundled().looks[0], strength: 0, gains: gains)
+        var px = [UInt8](repeating: 0, count: 4)
+        CIContext().render(out, toBitmap: &px, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
+                           format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
+        let rendered = ColorScience.lab(fromSRGB: (Double(px[0]) / 255, Double(px[1]) / 255, Double(px[2]) / 255))
+        let e = gains.apply(color)
+        let estimated = ColorScience.lab(fromSRGB: (e.x, e.y, e.z))
+        #expect(ColorScience.deltaE2000(rendered, estimated) < 1.5)
+        #expect(rendered.b < ColorScience.lab(fromSRGB: (color.x, color.y, color.z)).b - 5)
+    }
+
+    @Test func neutralGainsChangeNothing() {
+        let c = SIMD3(0.3, 0.6, 0.9)
+        let out = ChannelGains.neutral.apply(c)
+        #expect(abs(out.x - c.x) < 1e-9 && abs(out.y - c.y) < 1e-9 && abs(out.z - c.z) < 1e-9)
     }
 }

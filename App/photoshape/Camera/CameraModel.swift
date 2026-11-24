@@ -49,6 +49,8 @@ final class CameraModel {
     /// Warmth given back after the camera's auto white balance (spec 02 FR-003); zero with an example,
     /// whose own color the matching follows instead (FR-004).
     private(set) var baseWarmth = 0.0
+    /// Mixed light: white balance follows the subject (spec 02 Hikâye 3.2); neutral otherwise and with an example.
+    private(set) var whiteBalanceGains = ChannelGains.neutral
 
     let backend: CameraBackend
     let references: ReferenceStore
@@ -100,6 +102,9 @@ final class CameraModel {
         references.entitlements = entitlements
     }
 
+    /// White balance the preview and the saved photo use right now; none while comparing (FR-011).
+    var currentGains: ChannelGains { isComparing ? .neutral : whiteBalanceGains }
+
     /// The look the preview and the saved photo use right now.
     var currentLook: LookRecipe {
         var recipe = LookRecipe.natural
@@ -125,13 +130,14 @@ final class CameraModel {
     private func analyzeOnce() async {
         guard let frame = backend.latestPreviewImage() else { return }
         let finder = finder, sampler = sampler
-        let (live, grid) = await Task.detached(priority: .utility) { () -> (Subject?, LuminanceGrid?) in
-            (finder.detect(frame), sampler.sample(frame)?.luminanceGrid)
+        let (live, sample) = await Task.detached(priority: .utility) { () -> (Subject?, SceneSample?) in
+            (finder.detect(frame), sampler.sample(frame))
         }.value
+        let grid = sample?.luminanceGrid
         let now = ProcessInfo.processInfo.systemUptime
         let values = await backend.currentExposure()
         if showingCard, values != liveExposure { liveExposure = values }
-        balanceWhite(cameraKelvin: values?.whiteBalance)
+        balanceWhite(cameraKelvin: values?.whiteBalance, sample: sample, subject: live)
         await expose(grid: grid, subject: live, now: now)
         await guide(live: live, grid: grid, now: now)
     }
@@ -161,11 +167,24 @@ final class CameraModel {
 
     /// Keeps part of a warm room's warmth (spec 02 FR-003). Eases toward the target so a lamp switched on
     /// does not make the preview jump (spec 02 uç durum).
-    private func balanceWhite(cameraKelvin: Double?) {
-        let target = matchedReferenceID == nil ? WhiteBalanceDecider.warmth(cameraKelvin: cameraKelvin) : 0
+    private func balanceWhite(cameraKelvin: Double?, sample: SceneSample?, subject: Subject?) {
+        let withoutExample = matchedReferenceID == nil
+        let target = withoutExample ? WhiteBalanceDecider.warmth(cameraKelvin: cameraKelvin) : 0
         let next = abs(target - baseWarmth) < 0.01 ? target : baseWarmth + 0.3 * (target - baseWarmth)
         if next != baseWarmth { baseWarmth = next }
+
+        // Window on one side, lamp on the other: balance on the subject (Hikâye 3.2). The frame is read before the
+        // look, so the app's own gains do not feed back into the reading.
+        let mixed = withoutExample ? sample.flatMap { s in subject.flatMap { WhiteBalanceDecider.mixedLight(
+            colors: s.colors, width: SceneSample.gridWidth, height: SceneSample.gridHeight, subject: $0.box) } } : nil
+        let goal = WhiteBalanceDecider.gains(for: mixed)
+        let eased = whiteBalanceGains.blended(toward: goal, by: 0.25)
+        let settled = abs(eased.red - goal.red) < 0.005 && abs(eased.blue - goal.blue) < 0.005 ? goal : eased
+        if settled != whiteBalanceGains { whiteBalanceGains = settled }
+        if mixed?.isMixed == true, !lastMixed { Diagnostics.log("mixed light: subject b* \(mixed!.subjectCast) around \(mixed!.surroundCast)") }
+        lastMixed = mixed?.isMixed == true
     }
+    private var lastMixed = false
 
     /// Guidance toward the example's framing, pose and light (spec 04).
     private func guide(live: Subject?, grid: LuminanceGrid?, now: TimeInterval) async {
@@ -315,17 +334,18 @@ final class CameraModel {
         guard gate.press(at: ProcessInfo.processInfo.systemUptime) else { return }
         shutterCount += 1 // feedback right away, before the capture finishes (SC-002)
         // What is on screen at the moment of the press is what gets saved (spec 03 uç durum "eşzamanlılık").
-        let recipe = currentLook, renderer = renderer
+        let recipe = currentLook, renderer = renderer, gains = currentGains
         let lookRef = references.current.flatMap { ref in
             adjustments == .zero ? nil : EditRecord.LookReference(id: "reference:\(ref.id.uuidString)", version: ref.profile.version, strength: 1)
-        } ?? (recipe.adjustments.temperature > 0 ? EditRecord.LookReference(id: "base:white-balance", version: 1, strength: 1) : nil)
+        } ?? (recipe.adjustments.temperature != 0 || !gains.isNeutral
+              ? EditRecord.LookReference(id: "base:white-balance", version: 1, strength: 1) : nil)
         Task {
             defer { gate.finish() }
             do {
                 let original = try await backend.capturePhoto()
                 let processed = try await Task.detached(priority: .userInitiated) {
                     try CaptureProcessor.process(original: original, appVersion: AppInfo.version, look: lookRef,
-                                                 applyLook: lookRef == nil ? nil : { renderer.render($0, recipe: recipe, strength: 1) })
+                                                 applyLook: lookRef == nil ? nil : { renderer.render($0, recipe: recipe, strength: 1, gains: gains) })
                 }.value
                 let url = FileManager.default.temporaryDirectory
                     .appendingPathComponent("photoshape-\(UUID().uuidString).jpg")
