@@ -15,7 +15,7 @@
 - [x] T10 Son görünüm ve görünüm başına güç hatırlama
 - [x] T11 Erişim hakkı soyutlaması; Debug'da kilitli görünüm ve deklanşörde kilit işareti
 - [ ] T12 Geliştirici ekranı: parametreler, donmuş kare, dışa/içe aktarma
-- [ ] T13 Lisans kontrolü derleme betiği (FR-009)
+- [x] T13 Lisans kontrolü (FR-009, 2026-11-24): LookKit `LicenseCheck` — görünüm klasöründeki her görsel, lisans kaydı tam olan bir tarifin örneği olmalı; tarifin adını verdiği ama olmayan görsel de hata. `scripts/check-licenses.sh` (`look-tool check-licenses`); `--release` yer tutucu görselleri de reddeder (açık soru 1: yer tutucuyla App Store'a çıkılmaz) — arşivden önce çalıştırılır. Paket testi her `scripts/test.sh` çalışmasında klasörü denetler
 - [ ] T14 Derinlikli bulanıklık: kayıtta, sonra önizlemede; performans ölçümü
 - [x] T15 UI testleri: görünüm değiştirme, güç, hatırlama, kilit
 

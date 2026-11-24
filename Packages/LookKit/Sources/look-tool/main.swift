@@ -3,6 +3,8 @@
 //   look-tool render-samples              write a placeholder sample image for every bundled look
 //                                         (into Sources/LookKit/Resources/Looks; license: placeholder-generated)
 //   look-tool compare <image> [OUT_DIR]   render a photo with every look (strength 1) for side-by-side review
+//   look-tool check-licenses [--release]  every image in the looks folder has a license record (spec 03 FR-009);
+//                                         --release also refuses placeholder images. Exit 1 on any problem.
 //
 // Run from Packages/LookKit: `swift run look-tool …`
 
@@ -55,6 +57,13 @@ guard let command = args.first else { fail("usage: look-tool render-samples | co
 let renderer = LookRenderer()
 
 switch command {
+case "check-licenses":
+    let dir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        .appendingPathComponent("Sources/LookKit/Resources/Looks", isDirectory: true)
+    let problems = LicenseCheck.problems(in: dir, release: args.contains("--release"))
+    for p in problems { FileHandle.standardError.write(Data("license: \(p)\n".utf8)) }
+    if !problems.isEmpty { exit(1) }
+    print("licenses ok")
 case "render-samples":
     let dir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
         .appendingPathComponent("Sources/LookKit/Resources/Looks", isDirectory: true)

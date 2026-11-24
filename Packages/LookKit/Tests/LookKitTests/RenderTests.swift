@@ -190,6 +190,19 @@ struct CatalogTests {
         }
     }
 
+    /// FR-009: the bundled folder passes the check; an unlicensed image or a placeholder in a release does not.
+    @Test func licenseCheck() throws {
+        let bundled = try #require(Bundle.module.url(forResource: "Looks", withExtension: nil))
+        #expect(LicenseCheck.problems(in: bundled, release: false) == [])
+        #expect(LicenseCheck.problems(in: bundled, release: true).count == 5, "placeholders cannot ship")
+
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try Data([0xFF, 0xD8]).write(to: dir.appendingPathComponent("stray.jpg"))
+        #expect(LicenseCheck.problems(in: dir, release: false).contains { $0.hasPrefix("stray.jpg") })
+    }
+
     @Test func brokenFilesAreSkippedNotFatal() throws {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
