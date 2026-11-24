@@ -116,15 +116,24 @@ final class ReferenceStore {
         failedToRead = false
         defer { isAnalyzing = false }
         let result = await Task.detached(priority: .userInitiated) { () -> Analysis? in
-            guard let upright = Self.upright(imageData, maxSide: 1024), let sample = SceneSample(image: upright),
-                  let thumb = Self.upright(imageData, maxSide: 300).flatMap({ UIImage(cgImage: $0).jpegData(compressionQuality: 0.85) })
+            guard let full = Self.upright(imageData, maxSide: 1600) else { return nil }
+            let settings = Self.cameraData(imageData)
+            // A screenshot (no camera data): only the photo inside it, without the app's bars (FR-003, Hikâye 1.2).
+            let region = settings == nil ? ScreenshotCrop.photoRegion(in: full) : nil
+            let photo = region.flatMap { r in
+                full.cropping(to: CGRect(x: r.minX * CGFloat(full.width), y: r.minY * CGFloat(full.height),
+                                         width: r.width * CGFloat(full.width), height: r.height * CGFloat(full.height)).integral)
+            } ?? full
+            guard let upright = Self.scaled(photo, maxSide: 1024), let sample = SceneSample(image: upright),
+                  let thumb = Self.scaled(photo, maxSide: 300).flatMap({ UIImage(cgImage: $0).jpegData(compressionQuality: 0.85) })
             else { return nil }
+            if let region { Diagnostics.log("screenshot: photo region \(region)") }
             let subject = SubjectDetector.detect(in: upright)
             // Finer grid for the card's light character (spec 05 FR-013); the middle stands in without a subject.
             let light = LuminanceGrid(image: upright).flatMap { LightAnalyzer.readExample($0, subject: subject?.box) }
             return Analysis(profile: ReferenceProfile(sample: sample), subject: subject, light: light,
                             angle: ShotAngleEstimator.estimate(in: upright),
-                            settings: Self.cameraData(imageData),
+                            settings: settings,
                             aspect: Double(upright.width) / Double(max(upright.height, 1)),
                             thumbnail: thumb, ghost: Self.outline(of: upright))
         }.value
@@ -212,6 +221,19 @@ final class ReferenceStore {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil),
               let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any] else { return nil }
         return ExampleSettings(properties: props)
+    }
+
+    /// The image with its long side limited (never enlarged).
+    nonisolated static func scaled(_ image: CGImage, maxSide: Int) -> CGImage? {
+        let scale = min(1, Double(maxSide) / Double(max(image.width, image.height)))
+        if scale == 1 { return image }
+        let w = max(1, Int((Double(image.width) * scale).rounded())), h = max(1, Int((Double(image.height) * scale).rounded()))
+        guard let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0,
+                                  space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                  bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return nil }
+        ctx.interpolationQuality = .high
+        ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+        return ctx.makeImage()
     }
 
     /// Decodes with EXIF orientation applied and the long side limited.
