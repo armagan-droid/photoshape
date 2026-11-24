@@ -12,6 +12,9 @@ struct CameraScreen: View {
     /// Sheet hand-offs: the card opens Örneklerim, and a pick in Örneklerim opens the card (spec 05 Hikâye 7).
     @State private var referencesAfterCard = false
     @State private var cardAfterReferences = false
+    #if DEBUG
+    @State private var developing = false
+    #endif
 
     var body: some View {
         ZStack {
@@ -200,7 +203,20 @@ struct CameraScreen: View {
             Spacer()
             ShutterButton(isReady: model.isReady, action: model.shutter)
             Spacer()
+            #if DEBUG
+            // Developer builds only (spec 03 Hikâye 4.5): the recipe editor.
+            Button { developing = true } label: {
+                Image(systemName: "slider.horizontal.3").font(.title3).foregroundStyle(.white.opacity(0.6))
+            }
+            .frame(width: 72, height: 72)
+            .accessibilityLabel(Text("dev.title"))
+            .accessibilityIdentifier("devTools")
+            .sheet(isPresented: $developing) {
+                DeveloperLookView(liveSource: model.backend.latestPreviewImage, renderer: model.renderer, recipe: model.currentLook)
+            }
+            #else
             Color.clear.frame(width: 72, height: 72)
+            #endif
         }
         .padding(.horizontal, 28)
     }

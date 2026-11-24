@@ -14,7 +14,8 @@
 - [x] T9 Çekimde görünümün uygulanması; `EditRecord.look`; deklanşör anındaki görünüm (uç durum "eşzamanlılık")
 - [x] T10 Son görünüm ve görünüm başına güç hatırlama
 - [x] T11 Erişim hakkı soyutlaması; Debug'da kilitli görünüm ve deklanşörde kilit işareti
-- [ ] T12 Geliştirici ekranı: parametreler, donmuş kare, dışa/içe aktarma
+- [x] T12 Geliştirici ekranı (Hikâye 4, 2026-11-24): yalnızca `#if DEBUG`; deklanşörün sağındaki düğmeyle açılır. Tüm parametreler (ton, renk, 8 renk aralığı × ton/doygunluk/parlaklık, bölünmüş tonlama, gren, vinyet) adlı ve sayılı kaydırıcılarla, canlı önizlemede; kareyi dondurma ve galeriden görüntü açma; uygulamanın tarif formatında `.look.json` paylaşım menüsüyle dışa aktarma (göndermeden önce yeniden okunarak doğrulanır) ve dosyadan içe alma. UI testi
+- [ ] Geliştirici ekranından AirDrop ile Mac'e gönderme ve tekrar içe alma (cihazda)
 - [x] T13 Lisans kontrolü (FR-009, 2026-11-24): LookKit `LicenseCheck` — görünüm klasöründeki her görsel, lisans kaydı tam olan bir tarifin örneği olmalı; tarifin adını verdiği ama olmayan görsel de hata. `scripts/check-licenses.sh` (`look-tool check-licenses`); `--release` yer tutucu görselleri de reddeder (açık soru 1: yer tutucuyla App Store'a çıkılmaz) — arşivden önce çalıştırılır. Paket testi her `scripts/test.sh` çalışmasında klasörü denetler
 - [ ] T14 Derinlikli bulanıklık: kayıtta, sonra önizlemede; performans ölçümü
 - [x] T15 UI testleri: görünüm değiştirme, güç, hatırlama, kilit

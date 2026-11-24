@@ -107,4 +107,18 @@ final class CaptureFlowUITests: XCTestCase {
         XCTAssertEqual(app.buttons["openSettings"].label, "Ayarlar'ı aç")
         XCTAssertFalse(app.buttons["shutter"].exists)
     }
+
+    /// Spec 03 Hikâye 4: developer builds have the recipe editor; a slider changes the recipe and export is offered.
+    func testDeveloperRecipeEditor() {
+        let app = launch("en")
+        let tools = app.buttons["devTools"]
+        XCTAssertTrue(tools.waitForExistence(timeout: 10))
+        tools.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["dev.slider.exposure"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["dev.export"].exists)
+        XCTAssertTrue(app.buttons["dev.freeze"].exists)
+        app.buttons["dev.freeze"].tap()
+        XCTAssertTrue(app.buttons["dev.freeze"].label == "Live" || app.buttons["Live"].waitForExistence(timeout: 3),
+                      "frozen frame can go back to live")
+    }
 }
