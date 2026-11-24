@@ -34,6 +34,16 @@ struct ReferencePromptView: View {
         .padding(.horizontal, 36)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("referencePrompt")
+        .paywall(store: store)
+    }
+}
+
+extension View {
+    /// The paywall over whatever screen asked to add an example (spec 07 Hikâye 2.3).
+    func paywall(store: ReferenceStore) -> some View {
+        sheet(isPresented: Binding(get: { store.paywallRequested }, set: { store.paywallRequested = $0 })) {
+            if let entitlements = store.entitlements as? StoreEntitlements { PaywallView(store: entitlements) }
+        }
     }
 }
 
@@ -44,14 +54,19 @@ struct ReferencePicker<Label: View>: View {
     @ViewBuilder let label: () -> Label
 
     var body: some View {
-        PhotosPicker(selection: $item, matching: .images, photoLibrary: .shared()) { label() }
-            .onChange(of: item) { _, picked in
-                guard let picked else { return }
-                Task {
-                    if let data = try? await picked.loadTransferable(type: Data.self) { await store.add(imageData: data) }
-                    item = nil
+        // With the quota full the same button opens the paywall, so no photo is picked for nothing (Hikâye 5.2).
+        if store.mayAddExample {
+            PhotosPicker(selection: $item, matching: .images, photoLibrary: .shared()) { label() }
+                .onChange(of: item) { _, picked in
+                    guard let picked else { return }
+                    Task {
+                        if let data = try? await picked.loadTransferable(type: Data.self) { await store.add(imageData: data) }
+                        item = nil
+                    }
                 }
-            }
+        } else {
+            Button { store.paywallRequested = true } label: { label() }
+        }
     }
 }
 
@@ -132,5 +147,6 @@ struct ReferencesSheet: View {
             .onChange(of: store.currentID) { old, new in if new != nil, old != new, !store.isAnalyzing { dismiss() } }
         }
         .preferredColorScheme(.dark)
+        .paywall(store: store)
     }
 }

@@ -21,6 +21,9 @@
          <BuildableReference BuildableIdentifier = "primary" BlueprintIdentifier = "3D4C91345015A4DD0A099400" BuildableName = "photoshape.app" BlueprintName = "photoshape" ReferencedContainer = "container:photoshape.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+         <StoreKitConfigurationFileReference
+         identifier = "../../Config/Products.storekit">
+      </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction buildConfiguration = "Release" shouldUseLaunchSchemeArgsEnv = "YES" savedToolIdentifier = "" useCustomWorkingDirectory = "NO" debugDocumentVersioning = "YES">
       <BuildableProductRunnable runnableDebuggingMode = "0">

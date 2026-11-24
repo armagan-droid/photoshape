@@ -8,3 +8,7 @@ IPHONEOS_DEPLOYMENT_TARGET = 18.0
 INFOPLIST_FILE = Config/Info.plist
 // Meta app ID for Instagram Stories sharing (spec 07 Hikâye 1.3). Empty until one is registered.
 FACEBOOK_APP_ID =
+// Spec 07b: quota and paywall. v1 (MVP) ships free with NO; v2 turns it on.
+PAYWALL_ENABLED = NO
+// Privacy policy page, required on the paywall (spec 07 FR-006). Empty hides the link until there is one.
+PRIVACY_POLICY_URL =

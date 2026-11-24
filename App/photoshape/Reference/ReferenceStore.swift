@@ -47,6 +47,9 @@ final class ReferenceStore {
     private(set) var selectionCount = 0
     /// Set by the camera model: the summary is asked of the single entitlement question (Constitution VII).
     var entitlements: Entitlements = AllUnlocked()
+    /// The quota is full: the paywall is shown instead of adding (spec 05 Hikâye 5.2).
+    var paywallRequested = false
+    var mayAddExample: Bool { entitlements.isAvailable(.addExample) }
     /// Examples whose summary is being written now; one at a time, never in the live loop (FR-029).
     private var summarizing: Set<String> = []
 
@@ -112,6 +115,7 @@ final class ReferenceStore {
 
     /// Analyzes a picked image off the main thread, stores it and makes it current.
     func add(imageData: Data) async {
+        guard mayAddExample else { paywallRequested = true; return }
         isAnalyzing = true
         failedToRead = false
         defer { isAnalyzing = false }
@@ -151,6 +155,7 @@ final class ReferenceStore {
         let profile = result.profile
         references.insert(reference, at: 0)
         saveIndex()
+        entitlements.didUse(.addExample)
         select(reference.id)
         Diagnostics.log("reference added: meanL \(profile.stats.meanL), chroma \(profile.stats.meanChroma), neutralB \(profile.stats.neutralB ?? .nan), subject \(result.subject?.kind.rawValue ?? "none"), angle \(String(describing: result.angle)), light \(String(describing: result.light))")
         Diagnostics.log("settings: \(String(describing: result.settings))")

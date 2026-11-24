@@ -100,6 +100,40 @@ final class ReferenceFlowUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Çekime başla"].exists)
     }
 
+    /// Spec 07b / spec 05 Hikâye 5: with the paywall on and 3 examples added in the last 7 days, adding a fourth
+    /// opens the paywall (prices from StoreKit, lifetime offered, restore); closing it returns, nothing is locked.
+    func testFourthExampleOpensThePaywall() {
+        let app = launch(["-ResetReferences", "YES", "-ReferencePrompt", "NO", "-Paywall", "YES", "-UITestQuotaUsed", "3"])
+        let chip = app.buttons["referenceChip"]
+        XCTAssertTrue(chip.waitForExistence(timeout: 10))
+        chip.tap()
+        let add = app.buttons["newReference"]
+        XCTAssertTrue(add.waitForExistence(timeout: 5))
+        add.tap()
+        XCTAssertTrue(app.buttons["paywall.restore"].waitForExistence(timeout: 5), "the paywall opened")
+        XCTAssertTrue(app.descendants(matching: .any)["paywall.noSubscription"].exists)
+        XCTAssertTrue(app.buttons["paywall.restore"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["paywall.nextSlot"].exists)
+        // Prices come from StoreKit. Xcode applies the scheme's StoreKit configuration; command-line runs may not,
+        // and then the paywall waits or offers to try again — it never shows made-up prices.
+        let lifetime = app.buttons["paywall.product.lifetime"]
+        if lifetime.waitForExistence(timeout: 8) {
+            XCTAssertTrue(lifetime.label.contains("39.99"), lifetime.label)
+            XCTAssertTrue(app.buttons["paywall.product.yearly"].exists)
+        } else {
+            XCTAssertTrue(app.buttons["Try again"].exists || app.activityIndicators.count > 0, "loading or retry, no fake price")
+        }
+        app.buttons["paywall.close"].tap()
+        XCTAssertTrue(app.buttons["noReference"].waitForExistence(timeout: 5), "back to Örneklerim")
+    }
+
+    /// With room left in the quota, adding works and counts (no paywall).
+    func testExampleWithinTheQuotaIsAdded() {
+        let app = launch(["-ResetReferences", "YES", "-Paywall", "YES", "-ResetQuota", "YES", "-UITestReference", "02-coffee-break.jpg"])
+        XCTAssertTrue(app.buttons["card.start"].waitForExistence(timeout: 10), "the example was added and its card opened")
+        XCTAssertFalse(app.descendants(matching: .any)["paywall"].exists)
+    }
+
     /// Hikâye 9: a summary that passes the check is shown at the top, marked as written with Apple Intelligence;
     /// one that fails it (digits) is not shown, and the card is otherwise unchanged.
     func testCardShowsACheckedSummaryOnly() {

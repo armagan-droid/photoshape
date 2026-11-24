@@ -9,8 +9,13 @@
 - [ ] Cihazda: Instagram yüklü ve yüklü değil; Gönderi ekranında 4:5 fotoğraf; Hikâye arka planı
 
 ## 07b Ödeme ve kota
-- [ ] T5 Erişim mantığı (saf, macOS'ta testli): işlem bilgilerinden premium (yıllık geçerli / bitmiş / iade / ömür boyu / Aile Paylaşımı); kayan 7 günde 3 örnek kotası
-- [ ] T6 StoreKit 2: ürünler, `Transaction.currentEntitlements` + `updates`, satın alma, geri yükleme; StoreKit yapılandırma dosyası
-- [ ] T7 Erişim hakkı soyutlamasının StoreKit uygulaması (FR-003); kota sayacı Keychain'de (spec 05 Hikâye 5.1)
-- [ ] T8 Ödeme ekranı: iki seçenek, StoreKit'ten yerel fiyat, "abonelik zorunlu değil", geri yükleme, yenileme koşulları, gizlilik/kullanım bağlantıları (FR-006, FR-007); dördüncü örnekte açılır
-- [ ] T9 UI testleri (StoreKit yapılandırmasıyla)
+- [x] T5 AccessKit paketi (saf, macOS'ta 12 test, SC-005): `AccessState.resolve` — yıllık geçerli/bitmiş, iade, ömür boyu, Aile Paylaşımı (ayarlanabilir), paket sahipliği (ömür boyuna dahil değil), yıllık + ömür boyu birlikte uyarısı; `ReferenceQuota` — kayan 7 günde 3, sonraki hakkın zamanı, premiumda sınırsız
+- [x] T6 StoreKit 2 (`StoreEntitlements`): ürünler, `Transaction.currentEntitlements` + `updates`, satın alma (bekleyen onay dahil), `AppStore.sync` ile geri yükleme; `Config/Products.storekit` (yıllık 19,99 $, ömür boyu 39,99 $), şemaya bağlı
+- [x] T7 Erişim hakkı soyutlaması (FR-003): `Feature.addExample`; kota tarihleri Keychain'de (yeniden kurulumda sıfırlanmaz, yalnızca tarih). `PAYWALL_ENABLED` (Config/Base.xcconfig) v1 için NO: kapalıyken `AllUnlocked`, uygulama bugünkü gibi ücretsiz. Çağıran kod değişmedi (örnek ekleme dışında)
+- [x] T8 Ödeme ekranı: yıllık ve ömür boyu (ömür boyu sarı, belirgin), StoreKit'ten yerel fiyat, "abonelik zorunlu değil", sonraki ücretsiz örneğin zamanı, geri yükleme, yenileme koşulları, Kullanım Koşulları (Apple standart EULA) ve Gizlilik Politikası bağlantısı (`PRIVACY_POLICY_URL`, boşsa gizli); kota doluyken "yeni örnek" düğmesi ödeme ekranını açar, fotoğraf seçtirmez
+- [x] T9 UI testleri: dördüncü örnekte ödeme ekranı, kapatınca geri dönüş; kota içindeyken ekleme. Komut satırı testlerinde StoreKit yapılandırması uygulanmayabiliyor: fiyat denetimi ürün yüklenirse yapılır
+- [ ] Gizlilik politikası sayfası ve `PRIVACY_POLICY_URL` (App Store incelemesi için gerekli)
+- [ ] App Store Connect'te ürünler ve bölgesel fiyatlar; Aile Paylaşımı ayarı
+- [ ] Sandbox: yıllık ve ömür boyu satın alma, geri yükleme, uçak modunda premium (SC-003, SC-004), iade
+- [ ] v2'de `PAYWALL_ENABLED = YES`
+- [ ] Paketler (Hikâye 4–5): barındırma ve imza kararı

@@ -11,5 +11,10 @@
 	<!-- Meta requires an app ID for sharing to Stories. Empty: the Story option is not offered (spec 07 FR-001). -->
 	<key>FacebookAppID</key>
 	<string>$(FACEBOOK_APP_ID)</string>
+	<!-- Spec 07b: whether the quota and paywall are on (v1: NO). -->
+	<key>PhotoshapePaywall</key>
+	<string>$(PAYWALL_ENABLED)</string>
+	<key>PhotoshapePrivacyPolicyURL</key>
+	<string>$(PRIVACY_POLICY_URL)</string>
 </dict>
 </plist>

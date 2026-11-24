@@ -3,7 +3,7 @@ import SwiftUI
 @main
 struct PhotoshapeApp: App {
     @State private var camera = CameraModel(backend: makeCameraBackend(), references: ReferenceStore(),
-                                            entitlements: AllUnlocked())
+                                            entitlements: AppAccess.make())
 
     var body: some Scene {
         WindowGroup {

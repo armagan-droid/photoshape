@@ -24,3 +24,7 @@
 
 ## Elle (iPhone 17)
 - [ ] Gerçek bir örnek fotoğrafla: canlı görüntü örneğe yaklaşıyor mu, titreme var mı, kayıt ekranla aynı mı
+
+## Kota (Hikâye 5, 2026-11-24, spec 07b ile)
+- [x] Kayan 7 günde 3 örnek, Keychain'de; premium sınırsız; dördüncüde ödeme ekranı; silme kotayı iade etmez (yalnızca ekleme tarihleri tutulur). `PAYWALL_ENABLED = NO` iken kapalı (v1 ücretsiz)
+

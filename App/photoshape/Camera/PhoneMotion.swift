@@ -12,7 +12,7 @@ final class PhoneMotion {
     func start() {
         #if DEBUG
         // UI tests: a fixed angle, so the simulator can show the hint.
-        if let fixed = UserDefaults.standard.object(forKey: "UITestPhoneDownward") as? Double { downwardAngle = fixed; return }
+        if let fixed = UserDefaults.standard.string(forKey: "UITestPhoneDownward").flatMap(Double.init) { downwardAngle = fixed; return }
         #endif
         guard manager.isDeviceMotionAvailable, !manager.isDeviceMotionActive else { return }
         manager.deviceMotionUpdateInterval = 0.1
