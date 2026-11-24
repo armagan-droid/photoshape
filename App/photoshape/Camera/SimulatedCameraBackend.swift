@@ -43,6 +43,11 @@ final class SimulatedCameraBackend: CameraBackend, @unchecked Sendable {
         return captureData
     }
 
+    func capturePhotos(count: Int) async throws -> [Data] {
+        let one = try await capturePhoto()
+        return Array(repeating: one, count: max(1, count))
+    }
+
     // MARK: - Scene
 
     private static func drawScene(width: Int, height: Int) -> CGImage? {

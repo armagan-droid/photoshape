@@ -2092,6 +2092,40 @@
         }
       }
     },
+    "review.otherFrames": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Other frames"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diğer kareler"
+          }
+        }
+      }
+    },
+    "review.otherFrames.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The frame you pick is added to your library as a new photo."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seçtiğin kare galerine yeni bir fotoğraf olarak eklenir."
+          }
+        }
+      }
+    },
     "review.revertHint": {
       "extractionState": "manual",
       "localizations": {
@@ -3244,6 +3278,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Renkler örneğine benzetildi"
+          }
+        }
+      }
+    },
+    "status.holdStill": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hold the phone still"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Telefonu sabit tut"
           }
         }
       }

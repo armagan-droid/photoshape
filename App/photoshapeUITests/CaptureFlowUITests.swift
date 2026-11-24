@@ -140,4 +140,31 @@ final class CaptureFlowUITests: XCTestCase {
         XCTAssertTrue(app.otherElements["ActivityListView"].waitForExistence(timeout: 5) || app.navigationBars["UIActivityContentView"].waitForExistence(timeout: 2)
                       || app.collectionViews.cells.count > 0, "falls back to the share sheet")
     }
+
+    /// Spec 06: one press takes a series; the best frame is saved, "Other frames" adds another as a new photo.
+    func testSeriesKeepsOtherFramesToChooseFrom() {
+        let app = launch("en", arguments: ["-UITestBurst", "3"])
+        takePhoto(app)
+        app.buttons["lastPhoto"].tap()
+        let other = app.buttons["otherFrames"]
+        XCTAssertTrue(other.waitForExistence(timeout: 5))
+        other.tap()
+        let frames = app.buttons.matching(identifier: "otherFrame")
+        XCTAssertTrue(frames.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertEqual(frames.count, 2, "three frames: one saved, two to choose from")
+        frames.firstMatch.tap()
+        XCTAssertTrue(app.images["reviewImage"].waitForExistence(timeout: 10), "the chosen frame is under review")
+        XCTAssertTrue(app.buttons["otherFrames"].waitForExistence(timeout: 5))
+        app.buttons["otherFrames"].tap()
+        XCTAssertEqual(app.buttons.matching(identifier: "otherFrame").count, 1, "one left")
+    }
+
+    /// A still scene without people takes a single frame (spec 06 Hikâye 4, open question 1): no "Other frames".
+    func testStillSceneTakesOneFrame() {
+        let app = launch("en")
+        takePhoto(app)
+        app.buttons["lastPhoto"].tap()
+        XCTAssertTrue(app.images["reviewImage"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["otherFrames"].exists)
+    }
 }

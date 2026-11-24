@@ -8,6 +8,8 @@ import Foundation
 final class PhoneMotion {
     private let manager = CMMotionManager()
     private(set) var downwardAngle: Double?
+    /// How fast the phone is turning (rad/s): a moving phone gets a series (spec 06 Hikâye 4).
+    private(set) var rotationRate = 0.0
 
     func start() {
         #if DEBUG
@@ -17,9 +19,11 @@ final class PhoneMotion {
         guard manager.isDeviceMotionAvailable, !manager.isDeviceMotionActive else { return }
         manager.deviceMotionUpdateInterval = 0.1
         manager.startDeviceMotionUpdates(to: .main) { [weak self] motion, _ in
-            guard let g = motion?.gravity else { return }
+            guard let motion else { return }
+            let g = motion.gravity, r = motion.rotationRate
             MainActor.assumeIsolated {
                 self?.downwardAngle = PhoneTilt.downwardAngle(gravityX: g.x, y: g.y, z: g.z)
+                self?.rotationRate = (r.x * r.x + r.y * r.y + r.z * r.z).squareRoot()
             }
         }
     }

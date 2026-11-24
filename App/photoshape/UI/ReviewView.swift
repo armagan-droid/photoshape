@@ -3,7 +3,10 @@ import SwiftUI
 /// Large view of the last photo with the system share sheet (Hikâye 4).
 struct ReviewView: View {
     let capture: CameraModel.LastCapture
+    /// "Diğer kareler" (spec 06 Hikâye 3): add another frame of the series as a new photo.
+    var chooseAlternative: (Int) -> Void = { _ in }
     @Environment(\.dismiss) private var dismiss
+    @State private var showingAlternatives = false
     @State private var hint = RevertHint()
     @State private var choosingInstagram = false
     @State private var fallbackShare = false
@@ -28,6 +31,13 @@ struct ReviewView: View {
                         .accessibilityIdentifier("revertHint")
                 }
                 Spacer(minLength: 0)
+                if !capture.alternativeThumbnails.isEmpty {
+                    Button { showingAlternatives = true } label: {
+                        Label("review.otherFrames", systemImage: "square.stack.3d.down.right").font(.subheadline)
+                    }
+                    .accessibilityIdentifier("otherFrames")
+                    .padding(.bottom, 10)
+                }
                 if InstagramShare.isInstalled { instagramButton }
                 ShareLink(item: capture.shareURL,
                           preview: SharePreview(Text("share.previewTitle"), image: Image(uiImage: capture.thumbnail))) {
@@ -58,6 +68,7 @@ struct ReviewView: View {
                     .accessibilityIdentifier("instagram.story")
             }
         }
+        .sheet(isPresented: $showingAlternatives) { alternatives }
         .sheet(isPresented: $fallbackShare) {
             ActivitySheet(items: [capture.shareURL]).presentationDetents([.medium, .large])
         }
@@ -67,6 +78,33 @@ struct ReviewView: View {
 }
 
 extension ReviewView {
+    var alternatives: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("review.otherFrames.hint").font(.footnote).foregroundStyle(.secondary)
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 10)], spacing: 10) {
+                    ForEach(Array(capture.alternativeThumbnails.enumerated()), id: \.offset) { index, image in
+                        Button {
+                            showingAlternatives = false
+                            chooseAlternative(index)
+                        } label: {
+                            Image(uiImage: image).resizable().aspectRatio(4.0 / 5.0, contentMode: .fill)
+                                .frame(height: 150).clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                        .accessibilityIdentifier("otherFrame")
+                    }
+                }
+                Spacer()
+            }
+            .padding(20)
+            .navigationTitle(Text("review.otherFrames"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("common.close") { showingAlternatives = false } } }
+        }
+        .presentationDetents([.medium])
+        .preferredColorScheme(.dark)
+    }
+
     /// Two taps to Instagram's post screen (spec 07 SC-001): this button, then "Post".
     var instagramButton: some View {
         Button { choosingInstagram = true } label: {

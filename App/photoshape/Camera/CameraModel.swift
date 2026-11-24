@@ -2,6 +2,7 @@ import CaptureKit
 import CompositionKit
 import CoreImage
 import FrameKit
+import ImageIO
 import LookKit
 import OSLog
 import SwiftUI
@@ -21,6 +22,16 @@ final class CameraModel {
         var revertible = false
         /// Library identifier once saved: Instagram Feed opens the photo by it (spec 07 Hikâye 1.2).
         var assetID: String?
+        /// The look of the press, for the other frames of the series.
+        var look: CaptureLook
+        /// The series' other frames (originals), kept for this session only (spec 06 FR-005).
+        var alternatives: [Data] = []
+        var alternativeThumbnails: [UIImage] = []
+
+        init(thumbnail: UIImage, shareURL: URL, look: CaptureLook, alternatives: [Data] = [], alternativeThumbnails: [UIImage] = []) {
+            self.thumbnail = thumbnail; self.shareURL = shareURL; self.look = look
+            self.alternatives = alternatives; self.alternativeThumbnails = alternativeThumbnails
+        }
     }
 
     struct Notice: Identifiable, Equatable {
@@ -88,6 +99,11 @@ final class CameraModel {
     private var guidedReferenceID: UUID?
     private let finder = SubjectFinder()
     private let motion = PhoneMotion()
+    /// The subject found in the last analyzed frame: a person means a series (spec 06 Hikâye 4).
+    private var lastLiveSubject: Subject?
+    /// After a memory warning, single frames for a while (spec 06 uç durum).
+    private var memoryPressureUntil = -Double.infinity
+    @ObservationIgnored private var memoryObserver: NSObjectProtocol?
     /// Developer builds: the subject found in the live frame (4:5 frame coordinates), drawn in blue.
     private(set) var debugLiveSubject: Subject?
     private var lastGuideLog = 0.0
@@ -102,6 +118,10 @@ final class CameraModel {
         self.references = references
         self.entitlements = entitlements
         references.entitlements = entitlements
+        memoryObserver = NotificationCenter.default.addObserver(forName: UIApplication.didReceiveMemoryWarningNotification,
+                                                                object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.memoryPressureUntil = ProcessInfo.processInfo.systemUptime + 60 }
+        }
     }
 
     /// White balance the preview and the saved photo use right now; none while comparing (FR-011).
@@ -136,6 +156,7 @@ final class CameraModel {
             (finder.detect(frame), sampler.sample(frame))
         }.value
         let grid = sample?.luminanceGrid
+        lastLiveSubject = live
         let now = ProcessInfo.processInfo.systemUptime
         let values = await backend.currentExposure()
         if showingCard, values != liveExposure { liveExposure = values }
@@ -228,6 +249,8 @@ final class CameraModel {
 
     enum Status: String {
         case lightForPerson, lightForSubject, brightSubjectBalanced, brightAreasProtected, colorsMatched
+        /// Every frame of a series was blurred (spec 06 Hikâye 1.3).
+        case holdStill
         var key: String { "status.\(rawValue)" }
     }
 
@@ -336,34 +359,27 @@ final class CameraModel {
         guard gate.press(at: ProcessInfo.processInfo.systemUptime) else { return }
         shutterCount += 1 // feedback right away, before the capture finishes (SC-002)
         // What is on screen at the moment of the press is what gets saved (spec 03 uç durum "eşzamanlılık").
-        let recipe = currentLook, renderer = renderer, gains = currentGains
-        let lookRef = references.current.flatMap { ref in
-            adjustments == .zero ? nil : EditRecord.LookReference(id: "reference:\(ref.id.uuidString)", version: ref.profile.version, strength: 1)
-        } ?? (recipe.adjustments.temperature != 0 || !gains.isNeutral
-              ? EditRecord.LookReference(id: "base:white-balance", version: 1, strength: 1) : nil)
+        let look = captureLook()
+        let subject = lastLiveSubject, rotation = motion.rotationRate
+        let constrained = ProcessInfo.processInfo.thermalState.rawValue >= ProcessInfo.ThermalState.serious.rawValue
+            || ProcessInfo.processInfo.systemUptime < memoryPressureUntil
         Task {
             defer { gate.finish() }
             do {
-                let original = try await backend.capturePhoto()
-                let processed = try await Task.detached(priority: .userInitiated) {
-                    try CaptureProcessor.process(original: original, appVersion: AppInfo.version, look: lookRef,
-                                                 applyLook: lookRef == nil ? nil : { renderer.render($0, recipe: recipe, strength: 1, gains: gains) })
+                var count = BurstPlan.frameCount(hasPerson: subject?.kind == .person, phoneRotation: rotation,
+                                                 isDim: await backend.isLowLight(), isConstrained: constrained)
+                #if DEBUG
+                if let forced = UserDefaults.standard.string(forKey: "UITestBurst").flatMap(Int.init) { count = forced }
+                #endif
+                let frames = try await backend.capturePhotos(count: count)
+                // The best frame is saved; the others stay in memory for this session only (spec 06 FR-005, uç durum).
+                let (best, selection) = await Task.detached(priority: .userInitiated) {
+                    BurstChooser.choose(frames, subject: subject?.box)
                 }.value
-                let url = FileManager.default.temporaryDirectory
-                    .appendingPathComponent("photoshape-\(UUID().uuidString).jpg")
-                try processed.shareJPEG.write(to: url)
-                let capture = LastCapture(thumbnail: UIImage(cgImage: processed.thumbnail), shareURL: url)
-                lastCapture = capture
-
-                switch await PhotoLibrarySaver.save(processed, formatIdentifier: AppInfo.bundleIdentifier) {
-                case .saved(let revertible, let assetID):
-                    if lastCapture?.id == capture.id {
-                        if revertible { lastCapture?.revertible = true }
-                        lastCapture?.assetID = assetID
-                    }
-                case .denied: show(.saveDenied)
-                case .failed: show(.saveFailed)
-                }
+                if frames.count > 1 { Diagnostics.log("series: \(frames.count) frames, chose \(best) (\(selection?.reason.rawValue ?? "-"))") }
+                if selection?.allBlurred == true, frames.count > 1 { announce(.holdStill) }
+                let others = frames.indices.filter { $0 != best }.map { frames[$0] }
+                await processAndSave(frames[best], look: look, alternatives: others)
             } catch {
                 // Capture failures are not shown as errors (Constitution II); the shutter simply becomes ready again.
                 Self.log.error("capture failed: \(String(describing: error), privacy: .public)")
@@ -371,6 +387,64 @@ final class CameraModel {
             }
         }
     }
+
+    /// Everything the saved photo needs from the moment of the press.
+    struct CaptureLook: @unchecked Sendable {
+        var recipe: LookRecipe
+        var gains: ChannelGains
+        var reference: EditRecord.LookReference?
+    }
+
+    private func captureLook() -> CaptureLook {
+        let recipe = currentLook, gains = currentGains
+        let reference = references.current.flatMap { ref in
+            adjustments == .zero ? nil : EditRecord.LookReference(id: "reference:\(ref.id.uuidString)", version: ref.profile.version, strength: 1)
+        } ?? (recipe.adjustments.temperature != 0 || !gains.isNeutral
+              ? EditRecord.LookReference(id: "base:white-balance", version: 1, strength: 1) : nil)
+        return CaptureLook(recipe: recipe, gains: gains, reference: reference)
+    }
+
+    /// Renders the look, writes the share copy and saves to Photos; `lastCapture` follows.
+    private func processAndSave(_ original: Data, look: CaptureLook, alternatives: [Data]) async {
+        let renderer = renderer
+        do {
+            let processed = try await Task.detached(priority: .userInitiated) {
+                try CaptureProcessor.process(original: original, appVersion: AppInfo.version, look: look.reference,
+                                             applyLook: look.reference == nil ? nil : { renderer.render($0, recipe: look.recipe, strength: 1, gains: look.gains) })
+            }.value
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent("photoshape-\(UUID().uuidString).jpg")
+            try processed.shareJPEG.write(to: url)
+            let thumbs = await Task.detached(priority: .utility) { alternatives.compactMap(BurstChooser.thumbnail) }.value
+            let capture = LastCapture(thumbnail: UIImage(cgImage: processed.thumbnail), shareURL: url, look: look,
+                                      alternatives: alternatives, alternativeThumbnails: thumbs.map(UIImage.init(cgImage:)))
+            lastCapture = capture
+            switch await PhotoLibrarySaver.save(processed, formatIdentifier: AppInfo.bundleIdentifier) {
+            case .saved(let revertible, let assetID):
+                if lastCapture?.id == capture.id {
+                    if revertible { lastCapture?.revertible = true }
+                    lastCapture?.assetID = assetID
+                }
+            case .denied: show(.saveDenied)
+            case .failed: show(.saveFailed)
+            }
+        } catch {
+            Self.log.error("processing failed: \(String(describing: error), privacy: .public)")
+            Diagnostics.log("processing failed: \(error)")
+        }
+    }
+
+    /// "Diğer kareler" (spec 06 Hikâye 3): the picked frame is added as a new photo (open question 2 default:
+    /// add-only access is enough), and becomes the one under review.
+    func chooseAlternative(_ index: Int, of capture: LastCapture) {
+        guard capture.alternatives.indices.contains(index) else { return }
+        var rest = capture.alternatives
+        let picked = rest.remove(at: index)
+        Task {
+            await processAndSave(picked, look: capture.look, alternatives: rest)
+            reviewing = lastCapture
+        }
+    }
+
 
     private func show(_ kind: Notice.Kind) {
         let notice = Notice(kind: kind)
@@ -438,3 +512,27 @@ final class SubjectFinder: @unchecked Sendable {
         return SubjectDetector.detect(in: cg)
     }
 }
+
+/// Scores the frames of a series and picks one (spec 06): sharpness on the live subject's box, eyes with Vision.
+enum BurstChooser {
+    static func choose(_ frames: [Data], subject: CGRect?) -> (Int, BurstSelection?) {
+        guard frames.count > 1 else { return (0, nil) }
+        let qualities = frames.map { data -> FrameQuality in
+            guard let image = upright(data, maxSide: 1024) else { return FrameQuality(sharpness: 0) }
+            return FrameQuality(sharpness: Sharpness.measure(image, subject: subject), faces: FaceEyes.detect(in: image))
+        }
+        let selection = BurstSelector.choose(qualities)
+        return (selection?.index ?? 0, selection)
+    }
+
+    static func thumbnail(_ data: Data) -> CGImage? { upright(data, maxSide: 300) }
+
+    static func upright(_ data: Data, maxSide: Int) -> CGImage? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+        let options: [CFString: Any] = [kCGImageSourceCreateThumbnailFromImageAlways: true,
+                                        kCGImageSourceCreateThumbnailWithTransform: true,
+                                        kCGImageSourceThumbnailMaxPixelSize: maxSide]
+        return CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
+    }
+}
+

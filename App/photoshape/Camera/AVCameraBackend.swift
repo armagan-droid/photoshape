@@ -125,24 +125,38 @@ final class AVCameraBackend: NSObject, CameraBackend, @unchecked Sendable {
     }
 
     func capturePhoto() async throws -> Data {
+        guard let first = try await capturePhotos(count: 1).first else { throw CameraError.noPhotoData }
+        return first
+    }
+
+    /// A series is one bracketed capture with the same exposure for every frame: one press, one sound, frames
+    /// a few tens of milliseconds apart (spec 06 Hikâye 1.1). Without bracket support: one frame.
+    func capturePhotos(count: Int) async throws -> [Data] {
         try await withCheckedThrowingContinuation { continuation in
             queue.async {
                 guard self.session.isRunning, self.photoOutput.connection(with: .video) != nil else {
                     continuation.resume(throwing: CameraError.unavailable); return
                 }
+                let format: [String: Any] = self.photoOutput.availablePhotoCodecTypes.contains(.hevc)
+                    ? [AVVideoCodecKey: AVVideoCodecType.hevc] : [AVVideoCodecKey: AVVideoCodecType.jpeg]
+                let series = count > 1 && self.photoOutput.maxBracketedCapturePhotoCount >= count
                 let settings: AVCapturePhotoSettings
-                if self.photoOutput.availablePhotoCodecTypes.contains(.hevc) {
-                    settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.hevc])
+                if series {
+                    let bias = self.device?.exposureTargetBias ?? 0
+                    let frames = (0..<count).map { _ in AVCaptureAutoExposureBracketedStillImageSettings.autoExposureSettings(exposureTargetBias: bias) }
+                    settings = AVCapturePhotoBracketSettings(rawPixelFormatType: 0, processedFormat: format, bracketedSettings: frames)
                 } else {
-                    settings = AVCapturePhotoSettings()
+                    settings = self.photoOutput.availablePhotoCodecTypes.contains(.hevc)
+                        ? AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.hevc]) : AVCapturePhotoSettings()
+                    settings.photoQualityPrioritization = .balanced
+                    if self.photoOutput.isDepthDataDeliveryEnabled {
+                        settings.isDepthDataDeliveryEnabled = true
+                        settings.embedsDepthDataInPhoto = true
+                    }
                 }
                 settings.maxPhotoDimensions = self.photoOutput.maxPhotoDimensions
-                settings.photoQualityPrioritization = .balanced
                 settings.flashMode = .off
-                if self.photoOutput.isDepthDataDeliveryEnabled {
-                    settings.isDepthDataDeliveryEnabled = true
-                    settings.embedsDepthDataInPhoto = true
-                }
+                Diagnostics.log("capture: \(series ? "series of \(count)" : "one frame")")
                 let id = settings.uniqueID
                 let delegate = PhotoCaptureDelegate { result in
                     self.queue.async { self.inFlight[id] = nil }
@@ -276,21 +290,21 @@ final class AVCameraBackend: NSObject, CameraBackend, @unchecked Sendable {
     }
 }
 
+/// Collects every frame of a capture (one, or a series); a series with some good frames is still a success.
 private final class PhotoCaptureDelegate: NSObject, AVCapturePhotoCaptureDelegate, @unchecked Sendable {
-    private let completion: (Result<Data, Error>) -> Void
-    private var data: Data?
+    private let completion: (Result<[Data], Error>) -> Void
+    private var frames: [Data] = []
     private var error: Error?
 
-    init(completion: @escaping (Result<Data, Error>) -> Void) { self.completion = completion }
+    init(completion: @escaping (Result<[Data], Error>) -> Void) { self.completion = completion }
 
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        if let error { self.error = error } else { data = photo.fileDataRepresentation() }
+        if let error { self.error = error } else if let data = photo.fileDataRepresentation() { frames.append(data) }
     }
 
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishCaptureFor resolvedSettings: AVCaptureResolvedPhotoSettings, error: Error?) {
-        if let error = error ?? self.error { completion(.failure(error)) }
-        else if let data { completion(.success(data)) }
-        else { completion(.failure(CameraError.noPhotoData)) }
+        if !frames.isEmpty { completion(.success(frames)) }
+        else { completion(.failure(error ?? self.error ?? CameraError.noPhotoData)) }
     }
 }
 

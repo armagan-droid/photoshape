@@ -24,6 +24,13 @@ protocol CameraBackend: AnyObject, Sendable {
     func focus(atDevicePoint point: CGPoint) async
     /// Original photo file data (HEIC, with depth when available). Never contains location.
     func capturePhoto() async throws -> Data
+    /// Several frames from one press, one shutter sound (spec 06 Hikâye 1.1). Falls back to one frame when the
+    /// camera cannot take a series right now.
+    func capturePhotos(count: Int) async throws -> [Data]
+}
+
+extension CameraBackend {
+    func capturePhotos(count: Int) async throws -> [Data] { [try await capturePhoto()] }
 }
 
 /// The camera's own values at this moment (spec 05 Hikâye 8.5).
