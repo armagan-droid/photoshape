@@ -92,6 +92,9 @@ public struct FrameLabels: Sendable, Hashable {
     public var cameraAngle: CameraAngle?
     public var lightDirection: LightDirection?
     public var lightQuality: LightQuality?
+    /// Spec 06: frames of one series share it; `sharpness` and this count are labeled per frame.
+    public var burstID: String? = nil
+    public var eyesClosedCount: Int? = nil
 }
 
 /// A rectangle in normalized image coordinates: 0–1, origin top-left, in the orientation the

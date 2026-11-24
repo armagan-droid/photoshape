@@ -40,6 +40,17 @@ struct LabelSchemaTests {
         #expect(fields(validate(FixtureSet.labels(id: "IMG_0001", ["camera_angle": "low"]))) == ["camera_angle"])
     }
 
+    /// 2026-11-25: optional series labels (spec 06 açık soru 4).
+    @Test func seriesLabelsAreOptional() throws {
+        let plain = try validate(FixtureSet.labels(id: "IMG_0001", [:])).get()
+        #expect(plain.burstID == nil && plain.eyesClosedCount == nil)
+        let labeled = try validate(FixtureSet.labels(id: "IMG_0001", ["burst_id": "walk-1", "eyes_closed_count": 1])).get()
+        #expect(labeled.burstID == "walk-1" && labeled.eyesClosedCount == 1)
+        #expect(fields(validate(FixtureSet.labels(id: "IMG_0001", ["eyes_closed_count": -1]))) == ["eyes_closed_count"])
+        #expect(fields(validate(FixtureSet.labels(id: "IMG_0001", ["eyes_closed_count": 1.5]))) == ["eyes_closed_count"])
+        #expect(fields(validate(FixtureSet.labels(id: "IMG_0001", ["eyes_closed_count": true]))) == ["eyes_closed_count"])
+    }
+
     @Test func missingRequiredFieldsAreAllReported() {
         let result = validate(FixtureSet.labels(id: "IMG_0001", ["exposure": nil, "sharpness": nil]))
         #expect(fields(result) == ["exposure", "sharpness"])

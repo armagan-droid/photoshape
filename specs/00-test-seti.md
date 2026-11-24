@@ -59,6 +59,8 @@ Her kare için aynı ada sahip bir etiket dosyası bulunur (örneğin `IMG_0012.
 | `camera_angle` | hayır (2026-11-23) | `top_down`, `angled`, `eye_level` | Çekim açısı. Spec 05 SC-007. Boşsa `scene_type`'tan türetilmez, kare açı ölçümüne girmez |
 | `light_direction` | hayır (2026-11-23) | `left`, `right`, `front`, `back`, `top`, `diffuse` | Konuya ışık nereden geliyor, fotoğrafı çekenin gözünden. `diffuse`: belirgin bir yön yok. Spec 05 SC-008 |
 | `light_quality` | hayır (2026-11-23) | `soft`, `hard` | Gölge kenarları yumuşak mı keskin mi. Spec 05 SC-009 |
+| `burst_id` | hayır (2026-11-25) | metin | Aynı seri çekimin kareleri aynı değeri taşır. Spec 06 SC-001, SC-002 |
+| `eyes_closed_count` | hayır (2026-11-25) | 0 ve üstü tam sayı | Gözü kapalı görünen kişi sayısı. Spec 06 SC-002 |
 | `pair_id` | hayır | serbest | Aynı sahnenin farklı denemelerini bağlar (örneğin iyi ve kötü pozlanmış hali) |
 | `notes` | hayır | serbest | — |
 

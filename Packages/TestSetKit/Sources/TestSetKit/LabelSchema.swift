@@ -7,6 +7,8 @@ public enum LabelSchema {
         public enum Kind: Sendable {
             case string
             case boolean
+            /// Whole number ≥ 0.
+            case count
             case oneOf([String])
             case setOf([String])
             /// `{"x", "y", "w", "h"}`, normalized 0–1, top-left origin, displayed orientation.
@@ -67,6 +69,10 @@ public enum LabelSchema {
               summary: "Where light reaches the subject from, photographer's view (spec 05 SC-008)"),
         Field(key: "light_quality", kind: .oneOf(values(LightQuality.self)), requirement: .optional,
               summary: "Soft or hard shadow edges (spec 05 SC-009)"),
+        Field(key: "burst_id", kind: .string, requirement: .optional,
+              summary: "Frames of one series share it (spec 06 SC-001, SC-002)"),
+        Field(key: "eyes_closed_count", kind: .count, requirement: .optional,
+              summary: "How many visible people have their eyes closed (spec 06 SC-002)"),
     ]
 
     /// Read from the image file (FR-005); writing them by hand is an error.
@@ -133,7 +139,9 @@ public enum LabelSchema {
             notes: dict["notes"] as? String,
             cameraAngle: (dict["camera_angle"] as? String).flatMap(CameraAngle.init(rawValue:)),
             lightDirection: (dict["light_direction"] as? String).flatMap(LightDirection.init(rawValue:)),
-            lightQuality: (dict["light_quality"] as? String).flatMap(LightQuality.init(rawValue:))
+            lightQuality: (dict["light_quality"] as? String).flatMap(LightQuality.init(rawValue:)),
+            burstID: dict["burst_id"] as? String,
+            eyesClosedCount: (dict["eyes_closed_count"] as? NSNumber)?.intValue
         )
         return .success(labels)
     }
@@ -190,6 +198,10 @@ public enum LabelSchema {
                 return "expected true or false"
             }
             return nil
+        case .count:
+            guard let n = value as? NSNumber, CFGetTypeID(n) != CFBooleanGetTypeID(),
+                  n.doubleValue >= 0, n.doubleValue == n.doubleValue.rounded() else { return "expected a whole number ≥ 0" }
+            return nil
         case .oneOf(let allowed):
             guard let s = value as? String else { return "expected one of: \(allowed.joined(separator: ", "))" }
             return allowed.contains(s) ? nil : "invalid value \"\(s)\"; expected one of: \(allowed.joined(separator: ", "))"
@@ -227,6 +239,7 @@ public enum LabelSchema {
             switch field.kind {
             case .string: p["type"] = "string"; p["minLength"] = 1
             case .boolean: p["type"] = "boolean"
+            case .count: p["type"] = "integer"; p["minimum"] = 0
             case .oneOf(let values): p["type"] = "string"; p["enum"] = values
             case .setOf(let values):
                 p["type"] = "array"; p["minItems"] = 1; p["uniqueItems"] = true
