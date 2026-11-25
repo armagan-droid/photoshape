@@ -38,6 +38,11 @@
 2. Taslak örneğin oranını korur ve 4:5 çerçevenin içine yerleşir.
 3. Çerçeve uyduğunda (hazır) taslak solar.
 
+## Yerleşim (2026-11-25)
+
+1. Yönlendirme cümlesi ve durum cümlesi önizlemenin **altında**, lens düğmelerinin hemen üstünde görünür; önizlemenin üstünde değil. Gerekçe: portrede yüz ve konu genellikle karenin üst yarısındadır; cümle konunun üstünü örtmemeli. Göz de zaten deklanşöre yakındır.
+2. Kurallar değişmez: aynı anda tek cümle (Constitution II), FR-K4 ve FR-008'deki süre kuralları geçerlidir.
+
 ## Fonksiyonel gereksinimler (kişi ve poz)
 
 - **FR-K1:** Kişi ve iskelet algılama Apple Vision ile cihazda yapılır (Constitution I, V). Örnek için bir kez, canlı görüntü için saniyede birkaç kez.

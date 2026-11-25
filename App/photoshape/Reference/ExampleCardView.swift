@@ -14,31 +14,30 @@ struct ExampleCardView: View {
     var lensKey = "lens.normal"
     @Environment(\.dismiss) private var dismiss
 
+    @State private var showingDetails = false
+
     var body: some View {
         let reading = reference.reading
+        let summary = store.summary(for: reference.id)
         NavigationStack {
             ScrollView {
+                // Layout (spec 05 "Yerleşim" 4–6): summary, steps, then details; the buttons stay at the bottom.
                 VStack(alignment: .leading, spacing: 18) {
                     header
-                    if let summary = store.summary(for: reference.id) { SummaryView(text: summary) }
-                    VStack(alignment: .leading, spacing: 14) {
-                        ForEach(reading.lines, id: \.topic) { line in
-                            LineRow(line: line).accessibilityIdentifier("card.line.\(line.topic.rawValue)")
-                        }
-                    }
-                    ExampleSettingsView(settings: reference.settings, measurements: reference.measurements,
-                                        live: live, appBias: appBias, lensKey: lensKey)
+                    if let summary { SummaryView(text: summary) }
                     steps(reading.steps)
-                    buttons
+                    if summary == nil { lines(reading) }
+                    details(reading, linesInside: summary != nil)
                 }
                 .padding(20)
             }
+            .safeAreaInset(edge: .bottom) { buttons }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("common.close") { dismiss() } }
             }
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.fraction(0.72), .large])
         .presentationDragIndicator(.visible)
         .preferredColorScheme(.dark)
         .accessibilityElement(children: .contain)
@@ -47,11 +46,44 @@ struct ExampleCardView: View {
         .task { store.summarize(reference.id) }
     }
 
+    private func lines(_ reading: ExampleReading) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            ForEach(reading.lines, id: \.topic) { line in
+                LineRow(line: line).accessibilityIdentifier("card.line.\(line.topic.rawValue)")
+            }
+        }
+    }
+
+    /// "Ayrıntılar": closed at first (Yerleşim 5). The settings, and the reading lines when a summary tells them.
+    private func details(_ reading: ExampleReading, linesInside: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) { showingDetails.toggle() }
+            } label: {
+                HStack {
+                    Text("card.details").font(.headline)
+                    Spacer()
+                    Image(systemName: "chevron.down").font(.subheadline.weight(.semibold))
+                        .rotationEffect(.degrees(showingDetails ? 180 : 0))
+                }
+                .contentShape(Rectangle())
+            }
+            .foregroundStyle(.white)
+            .accessibilityIdentifier("card.details")
+            .accessibilityValue(Text(showingDetails ? "card.details.open" : "card.details.closed"))
+            if showingDetails {
+                if linesInside { lines(reading) }
+                ExampleSettingsView(settings: reference.settings, measurements: reference.measurements,
+                                    live: live, appBias: appBias, lensKey: lensKey)
+            }
+        }
+    }
+
     private var header: some View {
         HStack(alignment: .center, spacing: 14) {
             if let image = store.thumbnail(reference.id) {
                 Image(uiImage: image).resizable().aspectRatio(contentMode: .fill)
-                    .frame(width: 64, height: 80).clipShape(RoundedRectangle(cornerRadius: 8))
+                    .frame(width: 48, height: 60).clipShape(RoundedRectangle(cornerRadius: 8))
             }
             Text("card.title").font(.title3.bold()).fixedSize(horizontal: false, vertical: true)
         }
@@ -75,6 +107,7 @@ struct ExampleCardView: View {
         .background(RoundedRectangle(cornerRadius: 12).fill(.white.opacity(0.08)))
     }
 
+    /// Fixed under the scrolling content (Yerleşim 6).
     private var buttons: some View {
         VStack(spacing: 12) {
             Button { dismiss() } label: {
@@ -90,7 +123,8 @@ struct ExampleCardView: View {
             .font(.subheadline)
             .foregroundStyle(.white.opacity(0.85))
         }
-        .padding(.top, 4)
+        .padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 8)
+        .background(.bar)
     }
 }
 

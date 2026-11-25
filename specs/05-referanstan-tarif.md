@@ -13,6 +13,8 @@
 >
 > **2026-11-23, örneğin ayarları (Hikâye 8):** Kullanıcı seçtiği fotoğrafın ışık ve pozlama ayarlarını sayılarla görmek istiyor (Constitution 2.0.0 buna izin verir). Açık soru 8 bu hikâyeyle kapsama alındı. FR-018..FR-023, SC-014..SC-017 eklendi.
 >
+> **2026-11-25, yerleşim:** Kartta asıl işe yarayan "Böyle çek" maddeleri ve "Çekime başla" kaydırmadan görünmüyordu; örnek kamera ekranında yalnızca yazılı bir kapsüldü. "Yerleşim" bölümü eklendi; Hikâye 0.2 Örneklerim düğmesiyle güncellendi.
+>
 > **2026-11-24, cihazdaki dil modeliyle özet (Hikâye 9):** Açık soru 7 kapsama alındı. Test cihazı iPhone 17 (Apple Intelligence destekli). Kart, destekleyen cihazlarda en üstte örneği 2–3 cümleyle anlatan bir özet gösterir. Özet yalnızca uygulamanın ölçtüklerini anlatır; satırlar ve "Böyle çek" maddeleri bugünkü gibi kural tabanlı kalır. FR-024..FR-031, SC-018..SC-022 eklendi. Constitution 2.1.0 ile onaylandı (2026-11-24).
 
 ## Ne ve neden
@@ -32,7 +34,7 @@ Rekabetteki asıl fark budur. "Yapay zekâ fotoğraf koçu" uygulamaları ayar v
 
 **Kabul senaryoları**
 1. **Verilen:** uygulama ilk kez açılır. **O zaman:** "Nasıl bir fotoğraf çekmek istiyorsun? Beğendiğin bir fotoğrafı seç." sorusu ve "Fotoğraf seç" düğmesi görünür. Örneksiz çekmek için kameraya geçmek de mümkündür.
-2. **Verilen:** daha önce örnek seçilmiş. **Olduğunda:** uygulama açılır. **O zaman:** kamera son örnekle hazır gelir; örnek köşede küçük bir ikon olarak görünür. İkona dokunmak örneğin tarifi kartını açar (Hikâye 7); örneği değiştirmek ya da kaldırmak karttan yapılır.
+2. **Verilen:** daha önce örnek seçilmiş. **Olduğunda:** uygulama açılır. **O zaman:** kamera son örnekle hazır gelir; örnek köşede küçük bir ikon olarak görünür. İkona dokunmak örneğin tarifi kartını açar (Hikâye 7); örneği değiştirmek ya da kaldırmak karttan ya da deklanşörün yanındaki Örneklerim düğmesinden yapılır (2026-11-25).
 3. **Verilen:** örnek seçilmiş ve kamera açık. **O zaman:** kamera ayarları örneğe göre yapılır (spec 02), açı/mesafe ve ışık yönlendirmeleri örneğe göre verilir (spec 04) ve canlı görüntü örneğin renk havasıyla gösterilir. Kullanıcı hiçbir ayara dokunmaz.
 
 ### Hikâye 1 — Ekran görüntüsünden görünüm (P1)
@@ -91,6 +93,19 @@ Kullanıcı örneği seçtiğinde "bu fotoğraf nasıl çekilmiş?" sorusunun ce
 4. **Verilen:** okumalar var. **O zaman:** "Böyle çek" bölümünde en fazla 3 madde yazar ("Işığı soluna al", "Telefonu hafif eğ", "Biraz yaklaş"). Maddeler örneği en çok belirleyen şeyden başlar: önce açı ve konunun yeri, sonra ışık, en son renk (README "Öncelik").
 5. **Verilen:** kart açık. **O zaman:** kamera ekranındaki yönlendirme ve durum cümleleri (spec 04, spec 02 FR-010) görünmez. Kart kapanınca normal kuralla geri gelirler.
 6. **Verilen:** örnek siyah-beyaz. **O zaman:** renk satırı "Siyah-beyaz." der; sıcak/soğuk yazmaz.
+
+### Yerleşim (2026-11-25)
+
+**Kamera ekranı**
+1. Örnek, önizlemenin sol üst köşesinde küçük bir resim olarak durur (eskiden ekranın tepesinde yazılı bir kapsüldü). Dokunmak kartı açar (Hikâye 7.2). Basılı tutmak örneği, bırakılana kadar büyütülmüş gösterir; bu bir bilgi öğesidir, çekimi değiştirmez. Örnek yoksa aynı köşede "örnek seç" simgesi durur ve Örneklerim'i açar.
+2. Deklanşörün sağında Örneklerim düğmesi durur: örneği tek dokunuşla değiştirmek ya da kaldırmak için. Bu yeni bir kontrol değildir; kapalı listedeki "örnek fotoğraf seçimi"ne giden ikinci yoldur (Constitution II).
+3. Geliştirici derlemelerinde tarif düzenleyici önizlemenin sağ üst köşesine taşınır.
+
+**Kart**
+4. Sıra: başlık ve örneğin resmi → özet (Hikâye 9, varsa) → "Böyle çek" maddeleri → "Ayrıntılar".
+5. "Ayrıntılar" kapalı başlar ve dokununca açılır. İçinde örneğin ayarları (Hikâye 8) durur. Özet gösteriliyorsa okuma satırları da (Hikâye 7) Ayrıntılar'ın içindedir, çünkü özet onları zaten anlatır. Özet yoksa satırlar "Böyle çek"in altında açık durur.
+6. "Çekime başla" düğmesi ile "Örneği değiştir" ve "Örneksiz çek" kartın altında sabittir; kaydırmadan görünür.
+7. Hikâye 7'nin kuralları değişmez: okunamayan satır yine görünmez, kart açıkken kamera cümleleri görünmez.
 
 ### Hikâye 8 — Örneğin ayarları (P1, 2026-11-23)
 

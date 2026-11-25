@@ -70,28 +70,59 @@ struct ReferencePicker<Label: View>: View {
     }
 }
 
-/// Small example icon on the camera screen; opens the example card, or "Örneklerim" without one (Hikâye 0.2, 7.2).
-struct ReferenceChip: View {
+/// The example in the preview's top left corner (spec 05 "Yerleşim" 1): a tap opens its card, holding shows it
+/// bigger until released. Without an example the same corner opens Örneklerim (Hikâye 0.2, 7.2).
+struct ExampleCorner: View {
     let store: ReferenceStore
     let open: () -> Void
+    @State private var peeking = false
+
+    static let size = CGSize(width: 48, height: 60)
 
     var body: some View {
-        Button(action: open) {
-            HStack(spacing: 10) {
-                if let current = store.current, let image = store.thumbnail(current.id) {
-                    Image(uiImage: image).resizable().aspectRatio(contentMode: .fill)
-                        .frame(width: 30, height: 38).clipShape(RoundedRectangle(cornerRadius: 5))
-                    Text("reference.current").font(.subheadline.weight(.medium))
-                } else {
-                    Image(systemName: "photo.badge.plus").font(.title3)
-                    Text("reference.choose").font(.subheadline.weight(.medium))
+        Group {
+            if let current = store.current, let image = store.thumbnail(current.id) {
+                Image(uiImage: image).resizable().aspectRatio(contentMode: .fill)
+                    .frame(width: Self.size.width, height: Self.size.height)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(.white.opacity(0.85), lineWidth: 1.5))
+                    .shadow(color: .black.opacity(0.4), radius: 4, y: 1)
+                    .overlay(alignment: .topLeading) {
+                        if peeking { enlarged(image).allowsHitTesting(false) }
+                    }
+                    .onTapGesture(perform: open)
+                    .onLongPressGesture(minimumDuration: 0.25, maximumDistance: 60) {
+                        withAnimation(.spring(duration: 0.25)) { peeking = true }
+                    } onPressingChanged: { pressing in
+                        if !pressing { withAnimation(.easeOut(duration: 0.2)) { peeking = false } }
+                    }
+                    .accessibilityLabel(Text("reference.current"))
+                    .accessibilityHint(Text("reference.corner.hint"))
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityAction(named: Text("reference.corner.peek")) { peeking.toggle() }
+            } else {
+                Button(action: open) {
+                    Image(systemName: "photo.badge.plus").font(.title3).foregroundStyle(.white)
+                        .frame(width: 44, height: 44)
+                        .background(Circle().fill(.black.opacity(0.4)))
                 }
+                .accessibilityLabel(Text("reference.choose"))
             }
-            .foregroundStyle(.white)
-            .padding(.horizontal, 12).padding(.vertical, 6)
-            .background(Capsule().fill(.white.opacity(0.12)))
         }
         .accessibilityIdentifier("referenceChip")
+    }
+
+    /// Up to 3.5 times the corner, the example's own shape; the stored image is small (Hikâye 6.2).
+    private func enlarged(_ image: UIImage) -> some View {
+        let aspect = image.size.width / max(image.size.height, 1)
+        let height = Self.size.height * 3.5
+        return Image(uiImage: image).resizable().aspectRatio(contentMode: .fit)
+            .frame(width: height * aspect, height: height)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(.white.opacity(0.85), lineWidth: 1.5))
+            .shadow(color: .black.opacity(0.5), radius: 10, y: 3)
+            .transition(.scale(scale: 0.3, anchor: .topLeading).combined(with: .opacity))
+            .accessibilityHidden(true)
     }
 }
 

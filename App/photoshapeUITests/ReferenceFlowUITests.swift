@@ -22,6 +22,15 @@ final class ReferenceFlowUITests: XCTestCase {
         XCTAssertTrue(app.buttons["card.start"].waitForNonExistence(timeout: 5))
     }
 
+    /// "Ayrıntılar" may sit under the fixed buttons at the card's first size: grow the card, then open it.
+    private func openDetails(_ app: XCUIApplication) {
+        app.swipeUp()
+        let details = app.buttons["card.details"]
+        if !details.isHittable { app.swipeUp() }
+        details.tap()
+        app.swipeUp()
+    }
+
     private func previewBrightness(_ app: XCUIApplication) -> Double {
         let image = app.descendants(matching: .any)["preview"].screenshot().image
         guard let cg = image.cgImage else { return 0 }
@@ -98,6 +107,26 @@ final class ReferenceFlowUITests: XCTestCase {
         XCTAssertLessThanOrEqual(app.descendants(matching: .any).matching(identifier: "card.step").count, 3)
         XCTAssertFalse(app.descendants(matching: .any)["status"].exists)
         XCTAssertTrue(app.buttons["Çekime başla"].exists)
+        // Without a summary the lines are open; the buttons are reachable without scrolling (spec 05 "Yerleşim").
+        XCTAssertTrue(app.buttons["card.start"].isHittable)
+        XCTAssertTrue(app.buttons["card.change"].isHittable)
+        XCTAssertTrue(app.buttons["card.details"].exists)
+    }
+
+    /// Spec 05 "Yerleşim" 1–2: the example sits in the preview's corner; Örneklerim is one tap from the shutter row.
+    func testExampleCornerAndExamplesButton() {
+        let app = launch(["-ResetReferences", "YES", "-UITestReference", "01-morning-light.jpg"])
+        closeCard(app)
+        let corner = app.buttons["referenceChip"], preview = app.descendants(matching: .any)["preview"]
+        XCTAssertTrue(corner.waitForExistence(timeout: 5))
+        XCTAssertTrue(preview.frame.contains(CGPoint(x: corner.frame.midX, y: corner.frame.midY)), "inside the preview")
+        XCTAssertLessThan(corner.frame.midX, preview.frame.midX)
+        XCTAssertLessThan(corner.frame.midY, preview.frame.midY)
+        app.buttons["referencesButton"].tap()
+        XCTAssertTrue(app.buttons["newReference"].waitForExistence(timeout: 5), "Örneklerim in one tap")
+        app.buttons["noReference"].tap()
+        XCTAssertTrue(app.buttons["referenceChip"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["referenceChip"].label.contains("Choose"))
     }
 
     /// Spec 07b / spec 05 Hikâye 5: with the paywall on and 3 examples added in the last 7 days, adding a fourth
@@ -143,7 +172,11 @@ final class ReferenceFlowUITests: XCTestCase {
         XCTAssertTrue(summary.waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["Kısaca"].exists)
         XCTAssertTrue(app.staticTexts["Apple Intelligence ile yazıldı"].exists)
-        XCTAssertTrue(app.descendants(matching: .any)["card.line.tone"].exists)
+        // The summary tells the lines, so they wait under "Ayrıntılar" (spec 05 "Yerleşim" 5).
+        XCTAssertFalse(app.descendants(matching: .any)["card.line.tone"].exists)
+        app.swipeUp() // the card's large size: "Ayrıntılar" is above the fixed buttons
+        app.buttons["card.details"].tap()
+        XCTAssertTrue(app.descendants(matching: .any)["card.line.tone"].waitForExistence(timeout: 3))
         app.terminate()
 
         app = launch(["-ResetReferences", "YES", "-UITestReference", "03-moody-table.jpg",
@@ -157,7 +190,8 @@ final class ReferenceFlowUITests: XCTestCase {
     func testCardShowsTheExampleSettings() {
         var app = launch(["-ResetReferences", "YES", "-UITestReference", "02-coffee-break.jpg", "-UITestReferenceCameraData", "YES"], language: "tr")
         XCTAssertTrue(app.buttons["card.start"].waitForExistence(timeout: 10))
-        app.swipeUp()
+        XCTAssertFalse(app.descendants(matching: .any)["settings"].exists, "details start closed")
+        openDetails(app)
         let shutter = app.descendants(matching: .any)["settings.shutter"]
         XCTAssertTrue(shutter.waitForExistence(timeout: 5))
         XCTAssertTrue(shutter.label.contains("1/125 sn"), shutter.label)
@@ -168,7 +202,8 @@ final class ReferenceFlowUITests: XCTestCase {
 
         app = launch(["-ResetReferences", "YES", "-UITestReference", "02-coffee-break.jpg"], language: "tr")
         XCTAssertTrue(app.buttons["card.start"].waitForExistence(timeout: 10))
-        app.swipeUp()
+        XCTAssertFalse(app.descendants(matching: .any)["settings"].exists, "details start closed")
+        openDetails(app)
         XCTAssertTrue(app.descendants(matching: .any)["settings.noCameraData"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.descendants(matching: .any)["settings.shutter"].exists, "no made-up shutter speed")
         XCTAssertTrue(app.descendants(matching: .any)["settings.brightness"].exists)

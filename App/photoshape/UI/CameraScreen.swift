@@ -4,11 +4,14 @@ import LookKit
 import SwiftUI
 
 /// The camera, set up from the chosen example photo (spec 05 Hikâye 0). Without an example the user first sees the
-/// prompt to pick one. Layout: example chip on top, preview with lens buttons inside, shutter row.
+/// prompt to pick one. Layout (spec 05 "Yerleşim"): the example in the preview's top left corner, the sentence and
+/// the lens buttons at the preview's bottom, then the shutter row with the last photo and Örneklerim.
 struct CameraScreen: View {
     @Bindable var model: CameraModel
     @Environment(\.scenePhase) private var scenePhase
     @State private var flash = false
+    /// Height of the dimmed strip above and below the 4:5 frame; overlays stay inside the frame.
+    @State private var frameInset: CGFloat = 0
     /// Sheet hand-offs: the card opens Örneklerim, and a pick in Örneklerim opens the card (spec 05 Hikâye 7).
     @State private var referencesAfterCard = false
     @State private var cardAfterReferences = false
@@ -73,13 +76,8 @@ struct CameraScreen: View {
 
     private var camera: some View {
         VStack(spacing: 0) {
-            // With an example the icon opens its card; without one, Örneklerim (spec 05 Hikâye 0.2, 7.2).
-            ReferenceChip(store: model.references) {
-                if model.references.current != nil { model.showingCard = true } else { model.showingReferences = true }
-            }
-                .frame(minHeight: 44)
-                .padding(.bottom, 6)
             preview
+                .padding(.top, 8)
             Spacer(minLength: 8)
             controls
             Spacer(minLength: 8)
@@ -124,6 +122,9 @@ struct CameraScreen: View {
             model.tapToFocus(viewPoint: point, viewSize: size)
         }, onHold: model.setComparing)
         .aspectRatio(3.0 / 4.0, contentMode: .fit)
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            CropGeometry.normalizedCrop(aspectWidth: proxy.size.width, aspectHeight: proxy.size.height).y * proxy.size.height
+        } action: { frameInset = $0 }
         .overlay { FrameMask().allowsHitTesting(false) }
         .overlay {
             if let ref = model.references.current, ref.subject != nil || model.references.ghost(ref.id) != nil {
@@ -131,30 +132,40 @@ struct CameraScreen: View {
                              isReady: model.isReady, debugLive: model.debugLiveSubject)
             }
         }
-        .overlay(alignment: .top) {
-            // One sentence at a time (Constitution II): comparing > guidance > what the app did.
-            Group {
-                if model.showingCard {
-                    EmptyView() // camera sentences wait for the card (spec 05 Hikâye 7.5)
-                } else if model.isComparing {
-                    StatusCaption(key: "compare.without").accessibilityIdentifier("comparing")
-                } else if let instruction = model.guidance {
-                    GuidanceBanner(instruction: instruction)
-                } else if let status = model.status {
-                    StatusCaption(key: status.key).accessibilityIdentifier("status")
-                }
-            }
-            .padding(.top, 34)
-            .transition(.opacity)
-        }
         .animation(.easeInOut(duration: 0.25), value: model.status)
         .animation(.easeInOut(duration: 0.15), value: model.isComparing)
         .animation(.easeInOut(duration: 0.25), value: model.guidance)
         .overlay { focusMarker.allowsHitTesting(false) }
         .overlay(alignment: .bottom) {
-            LensPicker(options: model.lensOptions, selected: model.selectedLens, select: model.select)
-                .padding(.bottom, 10)
+            // The sentence sits above the lens buttons, off the subject (spec 04 "Yerleşim").
+            VStack(spacing: 10) {
+                sentence.transition(.opacity)
+                LensPicker(options: model.lensOptions, selected: model.selectedLens, select: model.select)
+            }
+            .padding(.bottom, 10 + frameInset)
         }
+        .overlay(alignment: .topLeading) {
+            // With an example the corner opens its card; without one, Örneklerim (spec 05 Hikâye 0.2, 7.2).
+            ExampleCorner(store: model.references) {
+                if model.references.current != nil { model.showingCard = true } else { model.showingReferences = true }
+            }
+            .padding(10).padding(.top, frameInset)
+        }
+        #if DEBUG
+        .overlay(alignment: .topTrailing) {
+            // Developer builds only (spec 03 Hikâye 4.5): the recipe editor.
+            Button { developing = true } label: {
+                Image(systemName: "slider.horizontal.3").font(.body).foregroundStyle(.white.opacity(0.7))
+                    .frame(width: 40, height: 40).background(Circle().fill(.black.opacity(0.35)))
+            }
+            .padding(10).padding(.top, frameInset)
+            .accessibilityLabel(Text("dev.title"))
+            .accessibilityIdentifier("devTools")
+            .sheet(isPresented: $developing) {
+                DeveloperLookView(liveSource: model.backend.latestPreviewImage, renderer: model.renderer, recipe: model.currentLook)
+            }
+        }
+        #endif
         .overlay { Color.white.opacity(flash ? 0.8 : 0).allowsHitTesting(false) }
         .clipped()
         .onChange(of: model.shutterCount) {
@@ -163,6 +174,19 @@ struct CameraScreen: View {
         }
         .sensoryFeedback(.impact(weight: .medium), trigger: model.shutterCount)
         .sensoryFeedback(.success, trigger: model.readyCount)
+    }
+
+    /// One sentence at a time (Constitution II): comparing > guidance > what the app did.
+    @ViewBuilder private var sentence: some View {
+        if model.showingCard {
+            EmptyView() // camera sentences wait for the card (spec 05 Hikâye 7.5)
+        } else if model.isComparing {
+            StatusCaption(key: "compare.without").accessibilityIdentifier("comparing")
+        } else if let instruction = model.guidance {
+            GuidanceBanner(instruction: instruction)
+        } else if let status = model.status {
+            StatusCaption(key: status.key).accessibilityIdentifier("status")
+        }
     }
 
     @ViewBuilder private var focusMarker: some View {
@@ -204,20 +228,14 @@ struct CameraScreen: View {
             Spacer()
             ShutterButton(isReady: model.isReady, action: model.shutter)
             Spacer()
-            #if DEBUG
-            // Developer builds only (spec 03 Hikâye 4.5): the recipe editor.
-            Button { developing = true } label: {
-                Image(systemName: "slider.horizontal.3").font(.title3).foregroundStyle(.white.opacity(0.6))
+            // Örneklerim in one tap (spec 05 "Yerleşim" 2).
+            Button { model.showingReferences = true } label: {
+                Image(systemName: "photo.stack").font(.title2).foregroundStyle(.white)
+                    .frame(width: 52, height: 52).background(Circle().fill(.white.opacity(0.12)))
             }
             .frame(width: 72, height: 72)
-            .accessibilityLabel(Text("dev.title"))
-            .accessibilityIdentifier("devTools")
-            .sheet(isPresented: $developing) {
-                DeveloperLookView(liveSource: model.backend.latestPreviewImage, renderer: model.renderer, recipe: model.currentLook)
-            }
-            #else
-            Color.clear.frame(width: 72, height: 72)
-            #endif
+            .accessibilityLabel(Text("references.title"))
+            .accessibilityIdentifier("referencesButton")
         }
         .padding(.horizontal, 28)
     }
